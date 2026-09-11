@@ -236,16 +236,22 @@ class Session {
     // zoomati, una delle due pagine può stare fuori dal contenitore: si
     // scrive su quella che si vede, come farebbe una persona
     const vp = this.profile.viewport
-    let target = null
+    let spot = null
     for (let i = 0; i < n; i++) {
       const b = await eds.nth(i).boundingBox()
-      if (b && b.x + b.width > 40 && b.x < vp.width - 40) {
-        target = eds.nth(i)
+      if (!b) continue
+      // il pezzo di pagina davvero a schermo: si clicca lì in mezzo
+      const x0 = Math.max(b.x, 8)
+      const x1 = Math.min(b.x + b.width, vp.width - 8)
+      const y0 = Math.max(b.y, 80)
+      const y1 = Math.min(b.y + b.height, vp.height - 120)
+      if (x1 - x0 > 60 && y1 - y0 > 60) {
+        spot = { x: (x0 + x1) / 2, y: (y0 + y1) / 2 }
         break
       }
     }
-    if (!target) return
-    await target.click({ position: { x: 30, y: 30 } })
+    if (!spot) return
+    await this.page.mouse.click(spot.x, spot.y)
     await this.page.keyboard.insertText(text)
     await sleep(250)
   }
