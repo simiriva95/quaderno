@@ -1,13 +1,14 @@
 import { ContactShadows, Sparkles } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { BoxGeometry, NoToneMapping, PMREMGenerator, type PerspectiveCamera } from 'three'
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
+import { BoxGeometry, NoToneMapping, type PerspectiveCamera } from 'three'
 import { BOOK_D, SHELF_GAP_Y, plankWidth, shelfCount, slotFor } from './geometry'
 import { NotebookMesh } from './NotebookMesh'
 import { Cup, PencilCup, Plant } from './Props'
 import { woodTextures } from './textures'
 import { makeWallMaterial } from './WallMaterial'
+import { useToonGradient } from './toon'
+import { Hull, OUTLINE } from './Hull'
 import { cssVar } from '../../lib/covers'
 import type { Notebook } from '../../types'
 
@@ -24,6 +25,8 @@ interface Props {
 }
 
 const PLANK_T = 0.07
+/** angolo di vista, in radianti: 30° di tre quarti */
+const AZIMUTH = Math.PI / 6
 const PLANK_D = BOOK_D + 0.22
 
 /** Parete: intonaco in GLSL (vedi WallMaterial). Fondale, non superficie:
@@ -51,8 +54,8 @@ function Wall({
   )
   useEffect(() => () => material.dispose(), [material])
   return (
-    <mesh position={[0, -shelves * 0.55 + 0.4, -0.7]} material={material}>
-      <planeGeometry args={[40, 16]} />
+    <mesh position={[0, -shelves * 0.55 + 0.4, -0.75]} material={material}>
+      <planeGeometry args={[60, 24]} />
     </mesh>
   )
 }
@@ -72,22 +75,20 @@ function Plank({ y, width, themeTick }: { y: number; width: number; themeTick: n
   wood.roughnessMap.repeat.set(width / 2.2, 1)
 
   const bracket = cssVar('--c-wood-deep')
+  const toon = useToonGradient()
   return (
     <group position={[0, y - PLANK_T / 2, 0]}>
+      <Hull>
+        <boxGeometry args={[width + OUTLINE * 2, PLANK_T + OUTLINE * 2, PLANK_D + OUTLINE * 2]} />
+      </Hull>
       <mesh>
         <boxGeometry args={[width, PLANK_T, PLANK_D]} />
-        <meshStandardMaterial
-          map={wood.map}
-          roughnessMap={wood.roughnessMap}
-          roughness={0.82}
-          metalness={0}
-          envMapIntensity={0.25}
-        />
+        <meshToonMaterial map={wood.map} gradientMap={toon} />
       </mesh>
       {/* listello frontale appena più scuro: è la costa della tavola */}
       <mesh position={[0, 0, PLANK_D / 2 + 0.004]}>
         <boxGeometry args={[width, PLANK_T * 0.96, 0.008]} />
-        <meshStandardMaterial color={bracket} roughness={0.9} />
+        <meshToonMaterial color={bracket} gradientMap={toon} />
       </mesh>
       {/* reggimensola: due cunei sotto, verso la parete */}
       {[-1, 1].map((s) => (
@@ -97,7 +98,7 @@ function Plank({ y, width, themeTick }: { y: number; width: number; themeTick: n
           rotation={[0, 0, 0]}
         >
           <boxGeometry args={[0.05, 0.18, 0.2]} />
-          <meshStandardMaterial color={bracket} roughness={0.85} />
+          <meshToonMaterial color={bracket} gradientMap={toon} />
         </mesh>
       ))}
     </group>
@@ -137,12 +138,7 @@ function AddSlot({
     >
       <mesh>
         <boxGeometry args={[0.17, 1, BOOK_D]} />
-        <meshStandardMaterial
-          color={cssVar('--c-paper')}
-          roughness={1}
-          transparent
-          opacity={hover ? 0.4 : 0.2}
-        />
+        <meshToonMaterial color={cssVar('--c-paper')} transparent opacity={hover ? 0.4 : 0.2} />
       </mesh>
       <lineSegments>
         <edgesGeometry args={[new BoxGeometry(0.17, 1, BOOK_D)]} />
@@ -170,7 +166,7 @@ function CameraRig({ shelves, width }: { shelves: number; width: number }) {
   useEffect(() => {
     const cam = camera as PerspectiveCamera
     const contentH = shelves * SHELF_GAP_Y + 0.5
-    const contentW = width + 0.6
+    const contentW = width * Math.cos(AZIMUTH) + PLANK_D * Math.sin(AZIMUTH) + 0.8
     const vFov = (cam.fov * Math.PI) / 180
     const aspect = size.width / size.height
     // distanza che fa entrare sia l'altezza sia la larghezza, con un margine
@@ -178,37 +174,25 @@ function CameraRig({ shelves, width }: { shelves: number; width: number }) {
     const distW = contentW / 2 / Math.tan(vFov / 2) / aspect
     const z = Math.max(distH, distW) * 1.08
     const centerY = -((shelves - 1) * SHELF_GAP_Y) / 2 + 0.34
-    // leggermente dall'alto: si guarda una mensola, non la si fissa in faccia
-    base.current = { x: 0, y: centerY + z * 0.13, z, cy: centerY }
-    camera.position.set(0, base.current.y, z)
+    // di tre quarti, da un po' più in alto: una mensola vista entrando nella
+    // stanza, non un poster. La distanza tiene conto della larghezza ruotata.
+    base.current = { x: 0, y: centerY + z * 0.16, z: z * 1.02, cy: centerY }
+    camera.position.set(Math.sin(AZIMUTH) * z, base.current.y, Math.cos(AZIMUTH) * z)
     camera.lookAt(0, centerY, 0)
   }, [camera, shelves, width, size.width, size.height])
 
-  useFrame((_, dt) => {
+  useFrame(({ clock }, dt) => {
     const b = base.current
     const k = 1 - Math.exp(-dt * 3)
-    camera.position.x += (pointer.x * 0.08 * b.z * 0.3 - camera.position.x) * k
-    camera.position.y += (b.y + pointer.y * 0.04 * b.z * 0.3 - camera.position.y) * k
+    // ondeggio lento: mezzo grado di azimut, un soffio in altezza
+    const t = clock.elapsedTime
+    const az = AZIMUTH + Math.sin(t * 0.25) * 0.01 + pointer.x * 0.05
+    const ty = b.y + Math.sin(t * 0.4) * 0.012 + pointer.y * 0.02 * b.z * 0.3
+    camera.position.x += (Math.sin(az) * b.z - camera.position.x) * k
+    camera.position.z += (Math.cos(az) * b.z - camera.position.z) * k
+    camera.position.y += (ty - camera.position.y) * k
     camera.lookAt(0, b.cy, 0)
   })
-  return null
-}
-
-/** Riflessi ambientali: una stanza generata, non un HDR scaricato. Con
- *  NoToneMapping va tenuta bassa, o le copertine diventano di plastica. */
-function Env() {
-  const { gl, scene } = useThree()
-  useEffect(() => {
-    const pmrem = new PMREMGenerator(gl)
-    const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
-    scene.environment = env
-    scene.environmentIntensity = 0.28
-    return () => {
-      scene.environment = null
-      env.dispose()
-      pmrem.dispose()
-    }
-  }, [gl, scene])
   return null
 }
 
@@ -243,7 +227,6 @@ export default function ShelfScene({
       onPointerMissed={() => onHover(null)}
     >
       <CameraRig shelves={shelves} width={width} />
-      <Env />
 
       {/* Luce da finestra: calda, di taglio. Somma delle intensità intorno a 1:
           con NoToneMapping, scelto per tenere i pastelli fedeli al CSS, tutto

@@ -4,6 +4,8 @@ import { BoxGeometry, Vector3, type Group, type LineSegments } from 'three'
 import { BOOK_W, jitter, slotFor } from './geometry'
 import { useSpring3 } from './useSpring3'
 import { useCoverTextures } from './useCoverTextures'
+import { useToonGradient } from './toon'
+import { Hull, OUTLINE } from './Hull'
 import { coverColor, cssVar } from '../../lib/covers'
 import type { Notebook } from '../../types'
 
@@ -40,6 +42,7 @@ export function NotebookMesh({
   const [hovered, setHovered] = useState(false)
   const { height, tilt, depth } = jitter(notebook.id)
   const maps = useCoverTextures(notebook, themeTick)
+  const toon = useToonGradient()
 
   const pos = useSpring3(240, 24)
   const lift = useSpring3(300, 28)
@@ -126,9 +129,9 @@ export function NotebookMesh({
         <mesh position={[0, -0.006, -0.012]}>
           <boxGeometry args={[innerW, height - 0.03, depth - 0.02]} />
           {maps ? (
-            <meshStandardMaterial map={maps.pages} roughness={1} envMapIntensity={0.1} />
+            <meshToonMaterial gradientMap={toon} map={maps.pages} />
           ) : (
-            <meshStandardMaterial color="#EFE6DA" roughness={1} />
+            <meshToonMaterial gradientMap={toon} color="#EFE6DA" />
           )}
         </mesh>
 
@@ -139,27 +142,25 @@ export function NotebookMesh({
             <boxGeometry args={[COVER_T, height, depth]} />
             {maps ? (
               <>
-                <meshStandardMaterial
+                <meshToonMaterial
+                  gradientMap={toon}
                   attach="material-0"
                   map={s === 1 ? maps.cover : undefined}
                   color={s === 1 ? '#fff' : base}
-                  roughness={0.78}
-                  envMapIntensity={0.35}
                 />
-                <meshStandardMaterial
+                <meshToonMaterial
+                  gradientMap={toon}
                   attach="material-1"
                   map={s === -1 ? maps.cover : undefined}
                   color={s === -1 ? '#fff' : base}
-                  roughness={0.78}
-                  envMapIntensity={0.35}
                 />
-                <meshStandardMaterial attach="material-2" color={base} roughness={0.85} />
-                <meshStandardMaterial attach="material-3" color={base} roughness={0.85} />
-                <meshStandardMaterial attach="material-4" color={base} roughness={0.85} />
-                <meshStandardMaterial attach="material-5" color={base} roughness={0.85} />
+                <meshToonMaterial gradientMap={toon} attach="material-2" color={base} />
+                <meshToonMaterial gradientMap={toon} attach="material-3" color={base} />
+                <meshToonMaterial gradientMap={toon} attach="material-4" color={base} />
+                <meshToonMaterial gradientMap={toon} attach="material-5" color={base} />
               </>
             ) : (
-              <meshStandardMaterial color={base} roughness={0.85} />
+              <meshToonMaterial gradientMap={toon} color={base} />
             )}
           </mesh>
         ))}
@@ -169,29 +170,32 @@ export function NotebookMesh({
           <boxGeometry args={[BOOK_W + 0.004, height + 0.004, COVER_T]} />
           {maps ? (
             <>
-              <meshStandardMaterial attach="material-0" color={spineBase} roughness={0.8} />
-              <meshStandardMaterial attach="material-1" color={spineBase} roughness={0.8} />
-              <meshStandardMaterial attach="material-2" color={spineBase} roughness={0.8} />
-              <meshStandardMaterial attach="material-3" color={spineBase} roughness={0.8} />
-              <meshStandardMaterial
-                attach="material-4"
-                map={maps.spine}
-                roughness={0.72}
-                envMapIntensity={0.4}
-              />
-              <meshStandardMaterial attach="material-5" color={spineBase} roughness={0.8} />
+              <meshToonMaterial gradientMap={toon} attach="material-0" color={spineBase} />
+              <meshToonMaterial gradientMap={toon} attach="material-1" color={spineBase} />
+              <meshToonMaterial gradientMap={toon} attach="material-2" color={spineBase} />
+              <meshToonMaterial gradientMap={toon} attach="material-3" color={spineBase} />
+              <meshToonMaterial gradientMap={toon} attach="material-4" map={maps.spine} />
+              <meshToonMaterial gradientMap={toon} attach="material-5" color={spineBase} />
             </>
           ) : (
-            <meshStandardMaterial color={spineBase} roughness={0.8} />
+            <meshToonMaterial gradientMap={toon} color={spineBase} />
           )}
         </mesh>
+
+        {/* contorno a inchiostro: un guscio grande come il quaderno intero;
+            uno per mesh farebbe righe fra copertina e pagine */}
+        <Hull>
+          <boxGeometry
+            args={[BOOK_W + 0.004 + OUTLINE * 2, height + 0.004 + OUTLINE * 2, depth + OUTLINE * 2]}
+          />
+        </Hull>
 
         {/* l'elastico, sul taglio davanti: una striscia scura che gira
             attorno al quaderno */}
         {notebook.cover.elastic && (
           <mesh position={[0, 0, -depth / 2 + depth * 0.12]}>
             <boxGeometry args={[BOOK_W + 0.006, height + 0.004, 0.012]} />
-            <meshStandardMaterial color={cssVar('--c-ink')} roughness={0.7} />
+            <meshToonMaterial gradientMap={toon} color={cssVar('--c-ink')} />
           </mesh>
         )}
       </group>

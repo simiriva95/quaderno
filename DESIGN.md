@@ -313,6 +313,21 @@ quattro quarti — e in fondo girano pagina, secca: il foglio che gira non si
 legge da vicino. `+`, `-` ed `Esc` da tastiera; l'ingrandimento parte dal punto
 dove sta il cursore.
 
+**La mensola è un cartone animato.** `MeshToonMaterial` con una rampa a tre
+toni (ombra, mezzo tono, luce) al posto del PBR, e contorni a inchiostro fatti
+alla vecchia maniera: la stessa forma un filo più grande, disegnata dal lato
+interno (`Hull.tsx`). Un guscio per quaderno, non per mesh, o si vedrebbero
+righe fra copertina e pagine. La tazza ha un guscio chiuso a parte: con il
+profilo aperto il contorno si vedeva anche dentro. Le `Outlines` di drei non
+disegnavano nulla sulle nostre mesh; dieci righe nostre sì. Il colore del
+contorno è `--c-ink`: blu di giorno, crema di sera, come un gessetto.
+
+**Di tre quarti.** Camera a 30° di azimut e un po' più alta: si vede la
+copertina dell'ultimo quaderno, lo spessore della tavola, la stanza. La
+distanza tiene conto dell'ingombro ruotato. Ondeggio lento della camera (mezzo
+grado, un soffio in altezza) e foglie che respirano: la scena è viva, non
+mossa. L'environment map è sparita: il toon non la legge.
+
 ## Punteggi
 
 |         | Performance | Accessibilità | Best practices |

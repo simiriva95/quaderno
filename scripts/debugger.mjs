@@ -231,8 +231,21 @@ class Session {
   }
   async type(text) {
     const eds = this.page.getByRole('textbox', { name: /Testo della pagina/ })
-    if (!(await eds.count())) return
-    await eds.first().click()
+    const n = await eds.count()
+    if (!n) return
+    // zoomati, una delle due pagine può stare fuori dal contenitore: si
+    // scrive su quella che si vede, come farebbe una persona
+    const vp = this.profile.viewport
+    let target = null
+    for (let i = 0; i < n; i++) {
+      const b = await eds.nth(i).boundingBox()
+      if (b && b.x + b.width > 40 && b.x < vp.width - 40) {
+        target = eds.nth(i)
+        break
+      }
+    }
+    if (!target) return
+    await target.click({ position: { x: 30, y: 30 } })
     await this.page.keyboard.insertText(text)
     await sleep(250)
   }
