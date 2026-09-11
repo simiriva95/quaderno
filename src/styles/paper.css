@@ -12,6 +12,8 @@
      testo, quindi arriva da :root insieme a --hand-size (vedi useHandSize):
      22px → 7px, 26px → 6px, 30px → 4px. */
   --rule-lift: var(--hand-lift, 6px);
+  /* due pixel ma più tenui: stesso peso visivo di una riga da uno */
+  --c-rule-soft: color-mix(in oklab, var(--c-rule) 70%, var(--c-paper));
 
   position: relative;
   background-color: var(--c-paper);
@@ -35,19 +37,26 @@
   opacity: calc(var(--grain-opacity) * 0.6);
 }
 
-/* Le righe sono spesse 1.5px, non 1: la pagina vive sotto uno scale() e una
-   riga da 1px a scala 0.7 cade fra due pixel e sparisce, una sì e una no. */
-/* righe */
-.paper--lined {
-  background-image: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent calc(var(--rule-step) - 1.5px),
-    var(--c-rule) calc(var(--rule-step) - 1.5px),
-    var(--c-rule) var(--rule-step)
-  );
-  background-position: 0 calc(var(--pad-top) - var(--rule-lift));
-  background-repeat: repeat;
+/* Righe e quadretti: vedi <Rules> in PaperPage.tsx. Qui solo colore, spessore
+   e la taratura verticale: le orizzontali scendono di (32 - lift) così che la
+   riga stia --rule-lift sopra il fondo del box di linea. */
+.paper-rules {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+  transform: translateY(calc(var(--rule-step) - var(--rule-lift)));
+}
+
+.paper-rules line {
+  stroke: var(--c-rule-soft);
+  stroke-width: 2;
+  shape-rendering: geometricPrecision;
+}
+
+/* le verticali dei quadretti non devono traslare con le orizzontali */
+.paper-rules .paper-rules__v {
+  transform: translateY(calc(var(--rule-lift) - var(--rule-step)));
 }
 
 /* margine rosso verticale, solo su carta a righe */
@@ -62,35 +71,6 @@
   pointer-events: none;
 }
 
-/* quadretti: stesso passo verticale, quadrato */
-.paper--grid {
-  background-image:
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0,
-      transparent calc(var(--rule-step) - 1.5px),
-      var(--c-rule) calc(var(--rule-step) - 1.5px),
-      var(--c-rule) var(--rule-step)
-    ),
-    repeating-linear-gradient(
-      to right,
-      transparent 0,
-      transparent calc(var(--rule-step) - 1.5px),
-      var(--c-rule) calc(var(--rule-step) - 1.5px),
-      var(--c-rule) var(--rule-step)
-    );
-  background-position:
-    0 calc(var(--pad-top) - var(--rule-lift)),
-    var(--pad-x) 0;
-  opacity: 1;
-}
-
-.paper--grid,
-.paper--lined {
-  background-attachment: local;
-}
-
-/* bianca: nessun segno, stesso passo invisibile */
 .paper--blank {
   background-image: none;
 }

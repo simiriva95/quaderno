@@ -1,7 +1,7 @@
 import { ContactShadows, Sparkles } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { BoxGeometry, NoToneMapping, type PerspectiveCamera } from 'three'
+import { BoxGeometry, NoToneMapping, Vector3, type PerspectiveCamera } from 'three'
 import { BOOK_D, SHELF_GAP_Y, plankWidth, shelfCount, slotFor } from './geometry'
 import { NotebookMesh } from './NotebookMesh'
 import { Cup, PencilCup, Plant } from './Props'
@@ -25,8 +25,9 @@ interface Props {
 }
 
 const PLANK_T = 0.07
-/** angolo di vista, in radianti: 30° di tre quarti */
-const AZIMUTH = Math.PI / 6
+/** angolo di vista, in radianti: 30° di tre quarti, da sinistra. Da sinistra
+ *  lo slot "nuovo", ultimo a destra, è il più lontano e non copre nessuno. */
+const AZIMUTH = -Math.PI / 6
 const PLANK_D = BOOK_D + 0.22
 
 /** Parete: intonaco in GLSL (vedi WallMaterial). Fondale, non superficie:
@@ -140,7 +141,7 @@ function AddSlot({
         <boxGeometry args={[0.17, 1, BOOK_D]} />
         <meshToonMaterial color={cssVar('--c-paper')} transparent opacity={hover ? 0.4 : 0.2} />
       </mesh>
-      <lineSegments>
+      <lineSegments raycast={() => null}>
         <edgesGeometry args={[new BoxGeometry(0.17, 1, BOOK_D)]} />
         <lineBasicMaterial color={ink} transparent opacity={hover ? 0.6 : 0.38} />
       </lineSegments>
@@ -166,17 +167,36 @@ function CameraRig({ shelves, width }: { shelves: number; width: number }) {
   useEffect(() => {
     const cam = camera as PerspectiveCamera
     const contentH = shelves * SHELF_GAP_Y + 0.5
-    const contentW = width * Math.cos(AZIMUTH) + PLANK_D * Math.sin(AZIMUTH) + 0.5
     const vFov = (cam.fov * Math.PI) / 180
-    const aspect = size.width / size.height
-    // distanza che fa entrare sia l'altezza sia la larghezza, con un margine
-    const distH = contentH / 2 / Math.tan(vFov / 2)
-    const distW = contentW / 2 / Math.tan(vFov / 2) / aspect
-    const z = Math.max(distH, distW) * 1.08
     const centerY = -((shelves - 1) * SHELF_GAP_Y) / 2 + 0.34
-    // di tre quarti, da un po' più in alto: una mensola vista entrando nella
-    // stanza, non un poster. La distanza tiene conto della larghezza ruotata.
-    base.current = { x: 0, y: centerY + z * 0.16, z: z * 1.02, cy: centerY }
+    // prima stima dall'altezza, poi si proiettano gli otto vertici della
+    // mensola e si arretra finché stanno tutti nel quadro: il lato vicino
+    // alla camera, di tre quarti, è più grande di quanto dica la trigonometria
+    let z = (contentH / 2 / Math.tan(vFov / 2)) * 1.08
+    const corners: Vector3[] = []
+    for (const sx of [-1, 1])
+      for (const sy of [0, 1])
+        for (const sz of [-1, 1])
+          corners.push(
+            new Vector3(
+              (sx * width) / 2,
+              sy ? 1.2 : -(shelves - 1) * SHELF_GAP_Y - 0.3,
+              (sz * PLANK_D) / 2,
+            ),
+          )
+    for (let i = 0; i < 3; i++) {
+      cam.position.set(Math.sin(AZIMUTH) * z, centerY + z * 0.16, Math.cos(AZIMUTH) * z)
+      cam.lookAt(0, centerY, 0)
+      cam.updateMatrixWorld()
+      cam.updateProjectionMatrix()
+      let m = 0
+      for (const c of corners) {
+        const q = c.clone().project(cam)
+        m = Math.max(m, Math.abs(q.x), Math.abs(q.y))
+      }
+      z *= Math.max(1, m / 0.9)
+    }
+    base.current = { x: 0, y: centerY + z * 0.16, z, cy: centerY }
     camera.position.set(Math.sin(AZIMUTH) * z, base.current.y, Math.cos(AZIMUTH) * z)
     camera.lookAt(0, centerY, 0)
   }, [camera, shelves, width, size.width, size.height])

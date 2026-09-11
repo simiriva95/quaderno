@@ -328,6 +328,27 @@ distanza tiene conto dell'ingombro ruotato. Ondeggio lento della camera (mezzo
 grado, un soffio in altezza) e foglie che respirano: la scena è viva, non
 mossa. L'environment map è sparita: il toon non la legge.
 
+**Le righe sono un SVG, non un gradiente.** Sotto lo `scale()` della pagina
+Chrome arrotonda al pixel intero ogni tessera del `repeating-linear-gradient`:
+il passo diventa 30–31px invece di 32, il testo resta a 32, e riga dopo riga
+le parole scivolano via dalle righe. Con una sola immagine vettoriale 600×840
+righe e testo scalano insieme e restano allineati a qualunque zoom. La
+taratura verticale (`--rule-lift`) arriva via `transform` CSS, così i tre corpi
+del testo continuano a funzionare.
+
+**Le linee invisibili catturavano i click.** Il raycaster di three non guarda
+`visible` e per le linee usa una soglia di 1 unità di mondo: l'anello di focus
+di ogni quaderno e il bordo tratteggiato dello slot "nuovo" avevano un'area di
+click grande come la mensola, e cliccare ovunque apriva il primo quaderno. Ora
+hanno `raycast` spento. Trovato con una mappa dei click lungo il ripiano.
+
+**Il sollevamento va verso la camera.** Con la camera di tre quarti un passo
+lungo z appariva come uno scivolamento di lato sopra il vicino, e hover e click
+rimbalzavano fra quaderni adiacenti. La camera sta a sinistra, così lo slot
+"nuovo", ultimo a destra, è il più lontano e non copre nessuno; la distanza si
+trova proiettando gli otto vertici della mensola, non con la trigonometria del
+solo fronte.
+
 ## Punteggi
 
 |         | Performance | Accessibilità | Best practices |

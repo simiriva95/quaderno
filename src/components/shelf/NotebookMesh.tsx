@@ -63,13 +63,17 @@ export function NotebookMesh({
     lift.setTarget([0, 0, hovered || focused ? 0.14 : 0])
     const g = group.current
     if (!g) return
-    g.position.set(
-      pos.value.current[0],
-      pos.value.current[1],
-      pos.value.current[2] + lift.value.current[2],
-    )
+    // Il sollevamento va VERSO la camera, non lungo z: con la camera di tre
+    // quarti un passo lungo z appariva come uno scivolamento di lato sopra il
+    // vicino, e hover e click rimbalzavano fra quaderni adiacenti.
+    const [px, py] = pos.value.current
+    const l = lift.value.current[2]
+    const dx = camera.position.x - px
+    const dz = camera.position.z
+    const len = Math.hypot(dx, dz) || 1
+    g.position.set(px + (dx / len) * l, py, (dz / len) * l)
     // si inclina verso lo spettatore, come quando lo sfili con un dito
-    g.rotation.x = tilt + (lift.value.current[2] / 0.14) * 0.14
+    g.rotation.x = tilt + (l / 0.14) * 0.12
     g.rotation.z = tilt * 0.5
     if (outline.current) outline.current.visible = focused
   })
@@ -85,16 +89,19 @@ export function NotebookMesh({
         y: canvas.top + ((1 - q.y) / 2) * canvas.height,
       }
     }
-    const center = g ? g.getWorldPosition(new Vector3()) : new Vector3()
-    const c = toPx(center)
-    const top = toPx(center.clone().setY(center.y + height / 2))
-    const side = toPx(center.clone().setX(center.x + BOOK_W / 2))
-    return {
-      x: c.x - Math.abs(side.x - c.x),
-      y: c.y - Math.abs(top.y - c.y),
-      width: Math.abs(side.x - c.x) * 2,
-      height: Math.abs(top.y - c.y) * 2,
-    }
+    // il rettangolo che racchiude il dorso proiettato: la faccia +z del
+    // quaderno, con i suoi quattro vertici in coordinate di mondo. Vale per
+    // qualunque angolo di camera.
+    const corners: Vector3[] = []
+    for (const sx of [-1, 1])
+      for (const sy of [-1, 1])
+        corners.push(new Vector3((sx * BOOK_W) / 2, (sy * height) / 2, depth / 2))
+    const pts = corners.map((v) => toPx(g ? g.localToWorld(v) : v))
+    const xs = pts.map((q) => q.x)
+    const ys = pts.map((q) => q.y)
+    const x = Math.min(...xs)
+    const y = Math.min(...ys)
+    return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y }
   }
 
   const base = coverColor(notebook.cover.color)
@@ -201,7 +208,9 @@ export function NotebookMesh({
       </group>
 
       {/* anello di focus: disegnato in scena, non il contorno di sistema */}
-      <lineSegments ref={outline} visible={false}>
+      {/* raycast spento: three non guarda `visible` e per le linee usa una
+          soglia di 1 unità — l'anello catturava click grandi come la mensola */}
+      <lineSegments ref={outline} visible={false} raycast={() => null}>
         <edgesGeometry args={[new BoxGeometry(BOOK_W + 0.05, height + 0.05, depth + 0.05)]} />
         <lineBasicMaterial color={cssVar('--c-ink')} />
       </lineSegments>
