@@ -1,4 +1,4 @@
-import { ArrowLeft, PencilLine, Type } from 'lucide-react'
+import { ArrowLeft, PencilLine, Type, ZoomIn, ZoomOut } from 'lucide-react'
 import { motion } from 'motion/react'
 import { SaveIndicator } from '../ui/SaveIndicator'
 import type { SaveState } from '../../hooks/useAutosaveIndicator'
@@ -13,6 +13,7 @@ interface Props {
   onModeChange: (m: Mode) => void
   onBack: () => void
   saveState: SaveState
+  zoom: { canIn: boolean; canOut: boolean; onIn: () => void; onOut: () => void; label: string }
 }
 
 export function NotebookHeader({
@@ -23,6 +24,7 @@ export function NotebookHeader({
   onModeChange,
   onBack,
   saveState,
+  zoom,
 }: Props) {
   return (
     <header className="flex items-center gap-sm px-md py-xs">
@@ -46,6 +48,55 @@ export function NotebookHeader({
       <SaveIndicator state={saveState} />
 
       <p className="hidden text-2xs text-graphite opacity-65 sm:block">{pageLabel}</p>
+
+      {/* Sul telefono i livelli sono due (tutto, quarto): basta una lente che
+          alterna. Il titolo ha bisogno di quei 48px più della seconda lente. */}
+      <button
+        type="button"
+        onClick={zoom.canOut ? zoom.onOut : zoom.onIn}
+        aria-label={zoom.canOut ? 'Riduci zoom' : 'Aumenta zoom'}
+        className="grid size-11 place-items-center rounded-md bg-paper text-graphite shadow-paper sm:hidden"
+      >
+        {zoom.canOut ? (
+          <ZoomOut size={19} strokeWidth={1.75} />
+        ) : (
+          <ZoomIn size={19} strokeWidth={1.75} />
+        )}
+      </button>
+
+      {/* La lente: pagina intera, poi un quarto. Le frecce scorrono le zone. */}
+      <div
+        role="group"
+        aria-label="Zoom"
+        className="hidden items-center rounded-md bg-paper p-2xs shadow-paper sm:flex"
+      >
+        <button
+          type="button"
+          onClick={zoom.onOut}
+          disabled={!zoom.canOut}
+          aria-label="Riduci zoom"
+          title="Riduci zoom (−)"
+          className="grid size-11 place-items-center rounded-sm text-graphite transition-colors hover:bg-desk disabled:opacity-30"
+        >
+          <ZoomOut size={19} strokeWidth={1.75} />
+        </button>
+        <span
+          className="hidden min-w-[3.2rem] text-center text-2xs text-graphite md:block"
+          aria-live="polite"
+        >
+          {zoom.label}
+        </span>
+        <button
+          type="button"
+          onClick={zoom.onIn}
+          disabled={!zoom.canIn}
+          aria-label="Aumenta zoom"
+          title="Aumenta zoom (+)"
+          className="grid size-11 place-items-center rounded-sm text-graphite transition-colors hover:bg-desk disabled:opacity-30"
+        >
+          <ZoomIn size={19} strokeWidth={1.75} />
+        </button>
+      </div>
 
       <div
         role="radiogroup"

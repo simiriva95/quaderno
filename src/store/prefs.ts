@@ -4,6 +4,10 @@ import type { DrawTool, InkColor } from '../types'
 
 export type ThemeChoice = 'system' | 'light' | 'dark'
 
+/** Corpo della scrittura a mano: piccolo, medio, grande. Il passo delle
+ *  righe non cambia mai; cambia quanto inchiostro ci sta dentro. */
+export type TextSize = 'S' | 'M' | 'L'
+
 interface PrefsStore {
   theme: ThemeChoice
   sounds: boolean
@@ -11,6 +15,8 @@ interface PrefsStore {
   toolColor: string
   toolSize: number
   ink: InkColor
+  textSize: TextSize
+  setTextSize: (s: TextSize) => void
   setTheme: (t: ThemeChoice) => void
   toggleSounds: () => void
   setTool: (t: DrawTool) => void
@@ -28,6 +34,8 @@ export const usePrefs = create<PrefsStore>()(
       toolColor: 'graphite',
       toolSize: 1,
       ink: 'ink',
+      textSize: 'M',
+      setTextSize: (textSize) => set({ textSize }),
       setTheme: (theme) => set({ theme }),
       toggleSounds: () => set({ sounds: !get().sounds }),
       setTool: (tool) => set({ tool }),

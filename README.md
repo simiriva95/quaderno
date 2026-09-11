@@ -16,6 +16,12 @@ in `localStorage`, sul tuo dispositivo.
   adesivi, dorso, elastico, tipo di carta. Anteprima dal vivo.
 - **Modalità sera**, suoni opzionali, export/import JSON.
 
+## Leggere da vicino
+
+- **Corpo del testo** S/M/L nella barra di scrittura; le righe restano a 32px.
+- **Zoom a passi**: lente in alto, `+`/`-`/`Esc`. Tutto → pagina → quarto; le
+  frecce scorrono le zone e in fondo girano pagina.
+
 ## Sviluppo
 
 ```bash

@@ -74,6 +74,27 @@ export function TextPage({
       aria-label={`Testo della pagina ${pageIndex + 1}`}
       spellCheck={false}
       data-placeholder={pageIndex === 0 ? 'Inizia a scrivere…' : ''}
+      onKeyDown={(e) => {
+        // Invio dentro un titolo: si esce dal titolo, non se ne apre un altro.
+        // Il browser altrimenti continua lo span e tutto il resto della pagina
+        // nasce in grassetto a due righe.
+        if (e.key !== 'Enter') return
+        const sel = document.getSelection()
+        const node = sel?.anchorNode
+        const el = node instanceof Element ? node : node?.parentElement
+        const title = el?.closest('.hand-title')
+        if (!title || !e.currentTarget.contains(title) || !sel) return
+        e.preventDefault()
+        const out = document.createTextNode('\u200B')
+        title.after(out)
+        const range = document.createRange()
+        range.setStart(out, 1)
+        range.collapse(true)
+        sel.removeAllRanges()
+        sel.addRange(range)
+        const target = e.currentTarget
+        onInput(target.innerHTML, getCaretOffset(target))
+      }}
       onInput={(e) => {
         const el = e.currentTarget
         onInput(el.innerHTML, getCaretOffset(el))

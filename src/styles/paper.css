@@ -8,8 +8,10 @@
   --pad-x: 56px;
   --pad-top: 40px;
   /* Quanto la riga sta SOPRA il fondo del box di linea, per cadere sulla
-     baseline di Caveat. Non si calcola: si guarda. Manopola esposta apposta. */
-  --rule-lift: 7px;
+     baseline di Caveat. Non si calcola: si misura. Dipende dal corpo del
+     testo, quindi arriva da :root insieme a --hand-size (vedi useHandSize):
+     22px → 7px, 26px → 6px, 30px → 4px. */
+  --rule-lift: var(--hand-lift, 6px);
 
   position: relative;
   background-color: var(--c-paper);
@@ -141,7 +143,8 @@
       1 23,
     text;
   font-family: var(--font-hand);
-  font-size: 21px;
+  /* il corpo arriva da :root (S/M/L), la line-height è sempre il passo */
+  font-size: var(--hand-size, 26px);
   line-height: var(--rule-step);
   color: var(--c-ink);
   caret-color: var(--c-ink);
@@ -218,7 +221,7 @@
    deriva si accumula riga dopo riga, sfasando tutto il testo dalle righe. */
 .hand-title {
   display: block;
-  font-size: 30px;
+  font-size: calc(var(--hand-size, 26px) * 1.35);
   font-weight: 700;
   line-height: calc(var(--rule-step) * 2);
 }

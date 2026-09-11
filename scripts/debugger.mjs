@@ -158,10 +158,17 @@ class Session {
         )
     }
 
+    // zoomati, pagina fuori dal viewport e frecce sempre attive sono voluti
+    const zoomed =
+      (await p
+        .locator('[aria-live=polite]')
+        .textContent()
+        .catch(() => 'Tutto')) !== 'Tutto'
+
     // 6. la pagina sta dentro il viewport
     const box = await p.locator('.paper').first().boundingBox()
     const vp = this.profile.viewport
-    if (box && (box.x < -1 || box.x + box.width > vp.width + 1))
+    if (!zoomed && box && (box.x < -1 || box.x + box.width > vp.width + 1))
       await this.bug('la pagina sfonda il viewport', JSON.stringify(box))
 
     // 7. frecce: disabilitate solo quando ha senso
@@ -173,7 +180,7 @@ class Session {
     const lastHasContent = Boolean(last && (last.text || last.strokes?.length))
     const step = vp.width >= 900 ? 2 : 1
     const canNext = nb.lastOpenedPageIndex + step < nb.pages.length || lastHasContent
-    if (nextDisabled !== null && nextDisabled === canNext)
+    if (!zoomed && nextDisabled !== null && nextDisabled === canNext)
       await this.bug(
         'freccia avanti in stato sbagliato',
         `disabled=${nextDisabled} canNext=${canNext}`,
@@ -339,6 +346,38 @@ async function scripted(s) {
     await s.prev()
   })
   await s.act('torna al testo', () => s.setMode('text'))
+  await s.act('zoom: pagina → quarti → torna tutto', async () => {
+    const zin = p.locator('button[aria-label="Aumenta zoom"]:visible')
+    const zout = p.locator('button[aria-label="Riduci zoom"]:visible')
+    await zin.click()
+    await sleep(350)
+    if ((await zin.count()) && !(await zin.isDisabled())) await zin.click()
+    await sleep(350)
+    // le frecce scorrono le zone: l'etichetta della pagina non deve saltare.
+    // Da tastiera, perché sul telefono le frecce a schermo non ci sono.
+    const before = await s.label()
+    await p
+      .locator('body')
+      .click({ position: { x: 5, y: 5 } })
+      .catch(() => {})
+    await p.keyboard.press('ArrowRight')
+    await sleep(350)
+    if ((await s.label()) !== before)
+      await s.bug('la freccia zoomata ha girato pagina alla prima zona')
+    for (let i = 0; i < 3 && (await zout.count()) && !(await zout.isDisabled()); i++) {
+      await zout.click()
+      await sleep(300)
+    }
+    const t = await p
+      .locator('.paper')
+      .first()
+      .evaluate((el) => {
+        // la scatola è quella con la translate: dentro c'è la scala di adattamento
+        const box = el.closest('[style*="translate("]')
+        return box ? box.style.transform : ''
+      })
+    if (!/scale\(1\)/.test(t)) await s.bug('zoom non tornato a 1', t)
+  })
   await s.act('swipe (solo touch)', () => s.swipe(1))
   await s.act('reload: riapre sulla stessa pagina', async () => {
     const before = (await s.current()).lastOpenedPageIndex
@@ -439,6 +478,30 @@ async function monkey(s) {
       },
     ],
     ['swipe', () => s.swipe(pick([1, -1]))],
+    [
+      'zoom +',
+      async () => {
+        const b = s.page.locator('button[aria-label="Aumenta zoom"]:visible')
+        if (!(await b.isDisabled())) await b.click()
+        await sleep(350)
+      },
+    ],
+    [
+      'zoom −',
+      async () => {
+        const b = s.page.locator('button[aria-label="Riduci zoom"]:visible')
+        if (!(await b.isDisabled())) await b.click()
+        await sleep(350)
+      },
+    ],
+    [
+      'corpo testo',
+      async () => {
+        const r = s.page.getByRole('radio', { name: /Scrittura/ })
+        if (await r.count()) await r.nth(Math.floor(rand() * 3)).click()
+        await sleep(300)
+      },
+    ],
   ]
   for (let i = 0; i < MONKEY; i++) {
     const [name, fn] = pick(actions)

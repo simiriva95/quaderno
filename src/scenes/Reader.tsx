@@ -11,6 +11,7 @@ import { InkToolbar } from '../components/text/InkToolbar'
 import { TextPage, type CaretTarget } from '../components/text/TextPage'
 import { useAutosaveIndicator } from '../hooks/useAutosaveIndicator'
 import { useFitScale } from '../hooks/useFitScale'
+import { useHandSize } from '../hooks/useHandSize'
 import { useIsSpread, useMediaQuery } from '../hooks/useMediaQuery'
 import { useReducedMotion } from '../hooks/useReducedMotion'
 import { useSound } from '../hooks/useSound'
@@ -52,7 +53,7 @@ export default function Reader({ id }: { id: string }) {
 
   // il margine lascia posto all'astuccio laterale e alle frecce; sul telefono
   // le frecce non ci sono (angoli e swipe) e la pagina si prende tutto
-  const { ref: fitRef, scale } = useFitScale(contentW, PAGE_H, wide ? 72 : 8)
+  const { ref: fitRef, scale, size: fitSize } = useFitScale(contentW, PAGE_H, wide ? 72 : 8)
   const { state: saveState, ping } = useAutosaveIndicator()
   const reflow = useTextPagination(notebook, TEXT_W, TEXT_H)
   const play = useSound()
@@ -64,7 +65,16 @@ export default function Reader({ id }: { id: string }) {
   const drawApis = useRef(new Map<number, DrawApi>())
   const [activeDrawPage, setActiveDrawPage] = useState(0)
   const activeApi = () => drawApis.current.get(activeDrawPage)
-  const { viewport, handlers: zoomHandlers, zoomed } = useZoomPan(drawing)
+  // ── Zoom a passi ──────────────────────────────────────────────────────
+  // Livelli: tutto → una pagina → un quarto di pagina. Sul telefono la
+  // pagina è già tutto, quindi si va dritti ai quarti. Le frecce, quando si
+  // è zoomati, scorrono le zone in ordine di lettura e poi girano pagina.
+  type ZoomLevel = 'page' | 'quarter'
+  type Region = { level: ZoomLevel; page: number; quad: number }
+  const [zoom, setZoom] = useState<Region | null>(null)
+  const regionsRef = useRef<Region[]>([])
+  const { viewport, handlers: zoomHandlers, zoomed: pinched } = useZoomPan(drawing && !zoom)
+  const textSize = useHandSize()
 
   const pages = notebook?.pages ?? []
   const total = pages.length
@@ -80,6 +90,19 @@ export default function Reader({ id }: { id: string }) {
     if (notebook) setLastOpenedPage(notebook.id, index)
   }, [notebook?.id, index, setLastOpenedPage]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Cambiato il corpo, le pagine erano tagliate per un altro: si riversano.
+  // Ogni chiamata fa cascata fin dove serve; le successive trovano già tutto
+  // al suo posto e si fermano subito.
+  useEffect(() => {
+    if (!notebook) return
+    const n = notebook.pages.length
+    for (let i = 0; i < n; i++) {
+      const fresh = useNotebooks.getState().notebooks.find((x) => x.id === notebook.id)
+      const text = fresh?.pages[i]?.text
+      if (text) reflow(i, text, null)
+    }
+  }, [textSize, notebook?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // Si può andare avanti se c'è una pagina dopo, oppure se l'ultima ha
   // qualcosa scritto: allora il quaderno ne aggiunge una, come se fosse
   // rilegato. Un'ultima pagina bianca non ne chiama un'altra.
@@ -93,6 +116,18 @@ export default function Reader({ id }: { id: string }) {
   const go = useCallback(
     (dir: 1 | -1) => {
       if (!notebook || leaf) return
+
+      // zoomati: prima si scorrono le zone della pagina, poi si gira
+      if (zoom) {
+        const list = regionsRef.current
+        const i = list.findIndex((r) => r.page === zoom.page && r.quad === zoom.quad)
+        const next = list[i + dir]
+        if (next) {
+          setZoom(next)
+          return
+        }
+      }
+
       const target = index + dir * step
       if (target < 0) return
       if (dir === 1 && !canGoNext) return
@@ -101,7 +136,14 @@ export default function Reader({ id }: { id: string }) {
       // in doppia pagina il salto è di due: si rilegano tutte quelle che servono
       for (let k = total; k <= target; k++) appendPage(notebook.id)
 
-      if (reduced) {
+      // zoomati si riparte dalla prima (o ultima) zona della nuova pagina,
+      // e la pagina cambia secca: il foglio che gira non si legge da vicino
+      if (zoom) {
+        const list = regionsRef.current
+        setZoom(dir === 1 ? list[0]! : list[list.length - 1]!)
+      }
+
+      if (reduced || zoom) {
         setIndex(target)
         return
       }
@@ -126,7 +168,7 @@ export default function Reader({ id }: { id: string }) {
     },
     // StaticPage è definita sotto e chiude su `pages`/`notebook`: la dipendenza
     // reale è il quaderno, non il componente.
-    [notebook, leaf, index, step, total, canGoNext, appendPage, reduced, isSpread, play], // eslint-disable-line react-hooks/exhaustive-deps
+    [notebook, leaf, index, step, total, canGoNext, appendPage, reduced, isSpread, play, zoom], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   const finishFlip = useCallback(() => {
@@ -141,12 +183,19 @@ export default function Reader({ id }: { id: string }) {
       if (el instanceof HTMLElement && (el.isContentEditable || el.tagName === 'INPUT')) return
       if (e.key === 'ArrowRight') go(1)
       if (e.key === 'ArrowLeft') go(-1)
+      if (e.key === '+' || e.key === '=') zoomInRef.current()
+      if (e.key === '-') zoomOutRef.current()
+      if (e.key === 'Escape') setZoom(null)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [go])
 
   const swipe = useRef(0)
+  // le funzioni di zoom sono definite più sotto (dipendono dal layout):
+  // il listener da tastiera le raggiunge tramite ref
+  const zoomInRef = useRef<() => void>(() => {})
+  const zoomOutRef = useRef<() => void>(() => {})
 
   const handleInput = useCallback(
     (pageIndex: number, html: string, caret: number | null) => {
@@ -161,6 +210,74 @@ export default function Reader({ id }: { id: string }) {
     },
     [reflow, ping, isSpread, index, play],
   )
+
+  const pagesOnScreen = isSpread ? 2 : 1
+  const regions: Region[] = []
+  if (zoom?.level === 'page')
+    for (let p = 0; p < pagesOnScreen; p++) regions.push({ level: 'page', page: p, quad: 0 })
+  if (zoom?.level === 'quarter')
+    for (let p = 0; p < pagesOnScreen; p++)
+      for (let q = 0; q < 4; q++) regions.push({ level: 'quarter', page: p, quad: q })
+  regionsRef.current = regions
+  const sameRegion = (a: Region | null, b: Region | undefined) =>
+    !!a && !!b && a.page === b.page && a.quad === b.quad
+  const atFirstRegion = sameRegion(zoom, regions[0])
+  const atLastRegion = sameRegion(zoom, regions[regions.length - 1])
+
+  /** Dove sta il cursore: pagina (0/1 a schermo) e quarto. Se non c'è, 0. */
+  const caretSpot = () => {
+    const sel = document.getSelection()
+    const node = sel?.anchorNode
+    const el = node instanceof Element ? node : node?.parentElement
+    const editor = el?.closest<HTMLElement>('[contenteditable]')
+    const box = editorsRef.current?.getBoundingClientRect()
+    if (!editor || !box || !sel || sel.rangeCount === 0) return { page: 0, quad: 0 }
+    const r = sel.getRangeAt(0).getBoundingClientRect()
+    const rect = r.width || r.height ? r : editor.getBoundingClientRect()
+    const fx = (rect.left - box.left) / box.width
+    const fy = (rect.top - box.top) / box.height
+    const page = Math.min(pagesOnScreen - 1, Math.max(0, Math.floor(fx * pagesOnScreen)))
+    const inPage = fx * pagesOnScreen - page
+    const quad = (inPage < 0.5 ? 0 : 1) + (fy < 0.5 ? 0 : 2)
+    return { page, quad }
+  }
+  const zoomIn = () => {
+    const spot = caretSpot()
+    if (!zoom)
+      setZoom(
+        isSpread ? { level: 'page', page: spot.page, quad: 0 } : { level: 'quarter', ...spot },
+      )
+    else if (zoom.level === 'page')
+      setZoom({
+        level: 'quarter',
+        page: zoom.page,
+        quad: spot.page === zoom.page ? spot.quad : 0,
+      })
+  }
+  const zoomOut = () => {
+    if (!zoom) return
+    if (zoom.level === 'quarter' && isSpread) setZoom({ level: 'page', page: zoom.page, quad: 0 })
+    else setZoom(null)
+  }
+  const zoomLabel = !zoom ? 'Tutto' : zoom.level === 'page' ? 'Pagina' : 'Quarto'
+  zoomInRef.current = zoomIn
+  zoomOutRef.current = zoomOut
+
+  // trasformazione della scatola: la zona scelta riempie il contenitore
+  const boxW = contentW * scale
+  const boxH = PAGE_H * scale
+  let boxTransform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`
+  if (zoom && fitSize.w > 0) {
+    const pw = boxW / pagesOnScreen
+    const rw = zoom.level === 'page' ? pw : pw / 2
+    const rh = zoom.level === 'page' ? boxH : boxH / 2
+    const rx = zoom.page * pw + (zoom.level === 'quarter' ? (zoom.quad % 2) * rw : 0)
+    const ry = zoom.level === 'quarter' ? Math.floor(zoom.quad / 2) * rh : 0
+    const z = Math.min((fitSize.w - 24) / rw, (fitSize.h - 24) / rh)
+    const cx = rx + rw / 2 - boxW / 2
+    const cy = ry + rh / 2 - boxH / 2
+    boxTransform = `translate(${-cx * z}px, ${-cy * z}px) scale(${z})`
+  }
 
   if (!notebook) {
     return (
@@ -215,6 +332,13 @@ export default function Reader({ id }: { id: string }) {
           else setClosing(true)
         }}
         saveState={saveState}
+        zoom={{
+          canIn: !zoom || (zoom.level === 'page' && isSpread),
+          canOut: zoom !== null,
+          onIn: zoomIn,
+          onOut: zoomOut,
+          label: zoomLabel,
+        }}
       />
 
       {/* Una riga: [astuccio] [freccia] [pagina] [freccia]. La pagina misura lo
@@ -233,18 +357,19 @@ export default function Reader({ id }: { id: string }) {
           {/* le frecce stanno accanto al quaderno, non ai bordi dello schermo */}
           <NavArrow
             side="left"
-            offset={(contentW * scale) / 2}
-            disabled={!canGoBack}
+            offset={zoom ? fitSize.w / 2 - 60 : (contentW * scale) / 2}
+            always={zoom !== null}
+            disabled={!canGoBack && (!zoom || atFirstRegion)}
             onClick={() => go(-1)}
           />
           {/* la scatola occupa esattamente la pagina scalata: è lei che sta nel
               layout, la pagina dentro è a 600×840 e viene solo ridotta */}
           <div
             style={{
-              width: contentW * scale,
-              height: PAGE_H * scale,
-              transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
-              transition: zoomed ? undefined : 'transform 220ms var(--ease-quint)',
+              width: boxW,
+              height: boxH,
+              transform: boxTransform,
+              transition: pinched ? undefined : 'transform 260ms var(--ease-quint)',
             }}
             className="relative shrink-0 touch-none"
             {...zoomHandlers}
@@ -322,14 +447,15 @@ export default function Reader({ id }: { id: string }) {
 
               {/* Gli angoli si girano con un dito, come sulla carta: è l'affordance
                   che le frecce da sole non danno. In disegno restano fuori dai piedi. */}
-              {!drawing && canGoBack && <PageCorner side="left" onClick={() => go(-1)} />}
-              {!drawing && canGoNext && <PageCorner side="right" onClick={() => go(1)} />}
+              {!drawing && !zoom && canGoBack && <PageCorner side="left" onClick={() => go(-1)} />}
+              {!drawing && !zoom && canGoNext && <PageCorner side="right" onClick={() => go(1)} />}
             </div>
           </div>
           <NavArrow
             side="right"
-            offset={(contentW * scale) / 2}
-            disabled={!canGoNext}
+            offset={zoom ? fitSize.w / 2 - 60 : (contentW * scale) / 2}
+            always={zoom !== null}
+            disabled={!canGoNext && (!zoom || atLastRegion)}
             onClick={() => go(1)}
           />
         </div>
@@ -381,12 +507,15 @@ function NavArrow({
   offset,
   onClick,
   disabled,
+  always,
 }: {
   side: 'left' | 'right'
   /** metà larghezza del quaderno a schermo: la freccia si appoggia lì fuori */
   offset: number
   onClick: () => void
   disabled?: boolean
+  /** anche sul telefono: zoomati, gli angoli non ci sono e serve un appiglio */
+  always?: boolean
 }) {
   const Icon = side === 'left' ? ChevronLeft : ChevronRight
   return (
@@ -396,7 +525,9 @@ function NavArrow({
       disabled={disabled}
       aria-label={side === 'left' ? 'Pagina precedente' : 'Pagina successiva'}
       style={{ [side]: `calc(50% - ${offset + 62}px)` }}
-      className="absolute top-1/2 z-30 hidden size-12 -translate-y-1/2 place-items-center rounded-full bg-paper text-ink shadow-paper transition-[opacity,transform] hover:scale-105 disabled:pointer-events-none disabled:opacity-20 sm:grid"
+      className={`absolute top-1/2 z-30 size-12 -translate-y-1/2 place-items-center rounded-full bg-paper text-ink shadow-paper transition-[opacity,transform] hover:scale-105 disabled:pointer-events-none disabled:opacity-20 ${
+        always ? 'grid' : 'hidden sm:grid'
+      }`}
     >
       <Icon size={24} strokeWidth={2} />
     </button>

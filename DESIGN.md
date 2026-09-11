@@ -292,6 +292,27 @@ nella carta, testo a schermo uguale a quello salvato, frecce nello stato giusto,
 console pulita — e ogni violazione diventa un bug con screenshot in `.debugger/`.
 È questo che ha trovato il deadlock.
 
+**Il corpo del testo si sceglie, il passo delle righe no.** Tre corpi (22/26/30px)
+sotto la stessa `line-height` di 32px; il default era 21px e il testo galleggiava
+fra le righe. La taratura della riga (`--rule-lift`) dipende dal corpo — la
+baseline di Caveat cade a 23/24/26px dal bordo alto della line box — quindi
+misurata a coppie: 7/6/4px. Corpo e taratura vivono su `:root`, non sulla
+pagina: lo specchio con cui `paginate.ts` misura il testo è appeso a `body` e
+deve leggere lo stesso corpo, o taglia le pagine per un testo diverso da quello
+che si vede. Al cambio di corpo le pagine si riversano tutte.
+
+**Invio dentro un titolo esce dal titolo.** Il browser continua lo span e tutto
+il resto della pagina nasceva a due righe in grassetto.
+
+**Zoom a passi, non a rotella.** Tutto → una pagina → un quarto di pagina (sul
+telefono la pagina è già tutto: dritti ai quarti). È la stessa `scale()` che
+adatta la pagina al contenitore, con una traslazione che porta la zona scelta al
+centro: nessun secondo layout, il testo resta modificabile da vicino. Zoomati,
+le frecce scorrono le zone in ordine di lettura — pagina sinistra, destra, poi i
+quattro quarti — e in fondo girano pagina, secca: il foglio che gira non si
+legge da vicino. `+`, `-` ed `Esc` da tastiera; l'ingrandimento parte dal punto
+dove sta il cursore.
+
 ## Punteggi
 
 |         | Performance | Accessibilità | Best practices |
