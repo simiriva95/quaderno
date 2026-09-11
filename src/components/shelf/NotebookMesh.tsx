@@ -1,0 +1,206 @@
+import { useFrame, useThree } from '@react-three/fiber'
+import { useEffect, useRef, useState } from 'react'
+import { BoxGeometry, Vector3, type Group, type LineSegments } from 'three'
+import { BOOK_W, jitter, slotFor } from './geometry'
+import { useSpring3 } from './useSpring3'
+import { useCoverTextures } from './useCoverTextures'
+import { coverColor, cssVar } from '../../lib/covers'
+import type { Notebook } from '../../types'
+
+interface Props {
+  notebook: Notebook
+  index: number
+  total: number
+  perShelf: number
+  focused: boolean
+  /** Entra dall'alto invece di apparire: è appena stato creato. */
+  dropIn: boolean
+  themeTick: number
+  onOpen: (rect: { x: number; y: number; width: number; height: number }) => void
+  onHover: (title: string | null) => void
+}
+
+/** spessore di una copertina cartonata */
+const COVER_T = 0.014
+
+export function NotebookMesh({
+  notebook,
+  index,
+  total,
+  perShelf,
+  focused,
+  dropIn,
+  themeTick,
+  onOpen,
+  onHover,
+}: Props) {
+  const group = useRef<Group>(null)
+  const { camera, gl } = useThree()
+  const outline = useRef<LineSegments>(null)
+  const [hovered, setHovered] = useState(false)
+  const { height, tilt, depth } = jitter(notebook.id)
+  const maps = useCoverTextures(notebook, themeTick)
+
+  const pos = useSpring3(240, 24)
+  const lift = useSpring3(300, 28)
+  const slot = slotFor(index, total, perShelf)
+  const restY = slot.y + height / 2
+
+  // Il quaderno appena creato scende da sopra il ripiano e si assesta;
+  // gli altri sono già al loro posto.
+  useEffect(() => {
+    if (dropIn) pos.setFrom([slot.x, restY + 1.8, 0], [slot.x, restY, 0])
+    else pos.setTarget([slot.x, restY, 0])
+    // solo al montaggio: dopo, le posizioni le insegue la molla nel frame loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useFrame(() => {
+    pos.setTarget([slot.x, restY, 0])
+    lift.setTarget([0, 0, hovered || focused ? 0.14 : 0])
+    const g = group.current
+    if (!g) return
+    g.position.set(
+      pos.value.current[0],
+      pos.value.current[1],
+      pos.value.current[2] + lift.value.current[2],
+    )
+    // si inclina verso lo spettatore, come quando lo sfili con un dito
+    g.rotation.x = tilt + (lift.value.current[2] / 0.14) * 0.14
+    g.rotation.z = tilt * 0.5
+    if (outline.current) outline.current.visible = focused
+  })
+
+  /** Dove sta il dorso, in pixel di finestra: è da lì che parte l'apertura. */
+  const screenRect = () => {
+    const g = group.current
+    const canvas = gl.domElement.getBoundingClientRect()
+    const toPx = (p: Vector3) => {
+      const q = p.clone().project(camera)
+      return {
+        x: canvas.left + ((q.x + 1) / 2) * canvas.width,
+        y: canvas.top + ((1 - q.y) / 2) * canvas.height,
+      }
+    }
+    const center = g ? g.getWorldPosition(new Vector3()) : new Vector3()
+    const c = toPx(center)
+    const top = toPx(center.clone().setY(center.y + height / 2))
+    const side = toPx(center.clone().setX(center.x + BOOK_W / 2))
+    return {
+      x: c.x - Math.abs(side.x - c.x),
+      y: c.y - Math.abs(top.y - c.y),
+      width: Math.abs(side.x - c.x) * 2,
+      height: Math.abs(top.y - c.y) * 2,
+    }
+  }
+
+  const base = coverColor(notebook.cover.color)
+  const spineBase = coverColor(notebook.cover.spineColor)
+  const innerW = BOOK_W - COVER_T * 2
+
+  return (
+    <group
+      ref={group}
+      onPointerOver={(e) => {
+        e.stopPropagation()
+        setHovered(true)
+        onHover(notebook.title)
+        document.body.style.cursor = 'pointer'
+      }}
+      onPointerOut={() => {
+        setHovered(false)
+        onHover(null)
+        document.body.style.cursor = ''
+      }}
+      onClick={(e) => {
+        e.stopPropagation()
+        onOpen(screenRect())
+      }}
+    >
+      {/* Il materiale nasce insieme alla sua texture: assegnare una map a un
+          materiale già compilato non ricompila lo shader, e il quaderno
+          resterebbe bianco. Con la key three ricostruisce tutto. */}
+      <group key={maps ? 'textured' : 'plain'}>
+        {/* blocco delle pagine: appena più piccolo delle copertine, così dal
+            taglio si vede il bordo del cartone e poi i fogli */}
+        <mesh position={[0, -0.006, -0.012]}>
+          <boxGeometry args={[innerW, height - 0.03, depth - 0.02]} />
+          {maps ? (
+            <meshStandardMaterial map={maps.pages} roughness={1} envMapIntensity={0.1} />
+          ) : (
+            <meshStandardMaterial color="#EFE6DA" roughness={1} />
+          )}
+        </mesh>
+
+        {/* le due copertine: la faccia esterna porta la texture, il taglio
+            resta del colore del cartone */}
+        {[1, -1].map((s) => (
+          <mesh key={s} position={[s * (BOOK_W / 2 - COVER_T / 2), 0, 0]}>
+            <boxGeometry args={[COVER_T, height, depth]} />
+            {maps ? (
+              <>
+                <meshStandardMaterial
+                  attach="material-0"
+                  map={s === 1 ? maps.cover : undefined}
+                  color={s === 1 ? '#fff' : base}
+                  roughness={0.78}
+                  envMapIntensity={0.35}
+                />
+                <meshStandardMaterial
+                  attach="material-1"
+                  map={s === -1 ? maps.cover : undefined}
+                  color={s === -1 ? '#fff' : base}
+                  roughness={0.78}
+                  envMapIntensity={0.35}
+                />
+                <meshStandardMaterial attach="material-2" color={base} roughness={0.85} />
+                <meshStandardMaterial attach="material-3" color={base} roughness={0.85} />
+                <meshStandardMaterial attach="material-4" color={base} roughness={0.85} />
+                <meshStandardMaterial attach="material-5" color={base} roughness={0.85} />
+              </>
+            ) : (
+              <meshStandardMaterial color={base} roughness={0.85} />
+            )}
+          </mesh>
+        ))}
+
+        {/* dorso: leggermente sporgente, con la texture del titolo */}
+        <mesh position={[0, 0, depth / 2 - COVER_T / 2 + 0.004]}>
+          <boxGeometry args={[BOOK_W + 0.004, height + 0.004, COVER_T]} />
+          {maps ? (
+            <>
+              <meshStandardMaterial attach="material-0" color={spineBase} roughness={0.8} />
+              <meshStandardMaterial attach="material-1" color={spineBase} roughness={0.8} />
+              <meshStandardMaterial attach="material-2" color={spineBase} roughness={0.8} />
+              <meshStandardMaterial attach="material-3" color={spineBase} roughness={0.8} />
+              <meshStandardMaterial
+                attach="material-4"
+                map={maps.spine}
+                roughness={0.72}
+                envMapIntensity={0.4}
+              />
+              <meshStandardMaterial attach="material-5" color={spineBase} roughness={0.8} />
+            </>
+          ) : (
+            <meshStandardMaterial color={spineBase} roughness={0.8} />
+          )}
+        </mesh>
+
+        {/* l'elastico, sul taglio davanti: una striscia scura che gira
+            attorno al quaderno */}
+        {notebook.cover.elastic && (
+          <mesh position={[0, 0, -depth / 2 + depth * 0.12]}>
+            <boxGeometry args={[BOOK_W + 0.006, height + 0.004, 0.012]} />
+            <meshStandardMaterial color={cssVar('--c-ink')} roughness={0.7} />
+          </mesh>
+        )}
+      </group>
+
+      {/* anello di focus: disegnato in scena, non il contorno di sistema */}
+      <lineSegments ref={outline} visible={false}>
+        <edgesGeometry args={[new BoxGeometry(BOOK_W + 0.05, height + 0.05, depth + 0.05)]} />
+        <lineBasicMaterial color={cssVar('--c-ink')} />
+      </lineSegments>
+    </group>
+  )
+}

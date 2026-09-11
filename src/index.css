@@ -1,0 +1,72 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/caveat';
+@import '@fontsource-variable/nunito';
+@import './styles/theme.css';
+@import './styles/paper.css';
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background:
+      radial-gradient(
+        120% 90% at 18% -10%,
+        color-mix(in oklab, var(--c-paper-warm) 62%, transparent) 0%,
+        transparent 58%
+      ),
+      var(--c-desk);
+    background-attachment: fixed;
+    color: var(--c-graphite);
+    font-family: var(--font-ui);
+    font-size: 1rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+
+  /* Focus ring disegnato, non quello di sistema: doppio anello caldo
+     che resta visibile su qualsiasi pastello. */
+  :focus-visible {
+    outline: 2px solid var(--c-ink);
+    outline-offset: 3px;
+    border-radius: var(--radius-sm);
+  }
+
+  button,
+  [role='button'] {
+    font: inherit;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  ::selection {
+    background: var(--c-hl-yellow);
+    color: var(--c-graphite);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+}
+
+.toast-in {
+  animation: toast-in 260ms var(--ease-quint) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.12s !important;
+  }
+}

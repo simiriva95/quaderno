@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Il Quaderno degli Appunti</title>
+    <meta
+      name="description"
+      content="Un quaderno di carta che vive nel browser. I tuoi appunti restano sul tuo dispositivo."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='6' y='3' width='21' height='26' rx='3' fill='%23CFE3D0'/%3E%3Crect x='5' y='3' width='5' height='26' rx='2' fill='%23E8B4A0'/%3E%3Crect x='13' y='9' width='11' height='6' rx='1.4' fill='%23FBF7F0'/%3E%3Cg stroke='%232F3E6B' stroke-width='1.3' stroke-linecap='round' opacity='.55'%3E%3Cpath d='M14 20h9M14 23.5h6'/%3E%3C/g%3E%3C/svg%3E"
+    />
+    <meta name="theme-color" content="#EFE6DA" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1C1916" media="(prefers-color-scheme: dark)" />
+  </head>
+  <body>
+    <!-- La mensola vuota è già nell'HTML: la prima cosa che si vede arriva
+         prima del JavaScript, e non è mai una pagina bianca. React sostituisce
+         il contenuto di #root al primo render.
+         Gli stili stanno sull'elemento, non su #root: applicati a #root
+         resterebbero addosso all'app anche dopo il mount. -->
+    <style>
+      .boot {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #efe6da;
+      }
+      .boot svg {
+        width: min(70vw, 420px);
+        animation: boot-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+      @media (prefers-color-scheme: dark) {
+        .boot {
+          background: #1c1916;
+        }
+        .boot svg {
+          opacity: 0.45;
+        }
+      }
+      @keyframes boot-in {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot svg {
+          animation: none;
+        }
+      }
+    </style>
+    <div id="root">
+      <div class="boot">
+        <svg viewBox="0 0 320 180" aria-hidden="true">
+          <rect x="34" y="132" width="252" height="11" rx="3" fill="#d8b48c" />
+          <rect x="34" y="143" width="252" height="4" rx="2" fill="#b98f66" />
+          <g fill="#e2d6c6">
+            <rect x="74" y="72" width="18" height="60" rx="3" />
+            <rect x="96" y="66" width="18" height="66" rx="3" />
+            <rect x="118" y="76" width="18" height="56" rx="3" />
+            <rect x="140" y="68" width="18" height="64" rx="3" />
+          </g>
+        </svg>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

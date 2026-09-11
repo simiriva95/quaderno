@@ -1,0 +1,97 @@
+
+▶ desktop: scenario guidato
+  · mensola vuota
+  · atelier → crea
+  · scrivi pagina 1
+  · avanti (crea pagina)
+  · avanti di nuovo
+  · indietro
+  · indietro fino in fondo
+  · testo pagina 1 sopravvive allo sfoglio
+  · doppio click veloce su avanti
+  · frecce da tastiera
+  · modalità disegno + tratto orizzontale
+  · undo / redo
+  · sfoglia in disegno
+  · torna al testo
+  · swipe (solo touch)
+  · reload: riapre sulla stessa pagina
+  · torna alla mensola
+  · mensola: il quaderno c’è
+  · riapri dalla mensola
+▶ desktop: scimmia ×25
+  · scimmia #1 avanti
+  · scimmia #2 swipe
+  · scimmia #3 swipe
+  · scimmia #4 disegna
+  · scimmia #5 indietro
+  · scimmia #6 avanti
+  · scimmia #7 avanti
+  · scimmia #8 swipe
+  · scimmia #9 tastiera →
+  · scimmia #10 scrivi
+  · scimmia #11 tastiera →
+  · scimmia #12 disegna
+  · scimmia #13 disegna
+  · scimmia #14 scrivi
+  · scimmia #15 disegna
+  · scimmia #16 indietro
+  · scimmia #17 scrivi
+  · scimmia #18 tastiera ←
+  · scimmia #19 disegna
+  · scimmia #20 indietro
+  · scimmia #21 avanti
+  · scimmia #22 swipe
+  · scimmia #23 scrivi
+  · scimmia #24 avanti
+  · scimmia #25 avanti
+
+▶ mobile: scenario guidato
+  · mensola vuota
+  · atelier → crea
+  · scrivi pagina 1
+  · avanti (crea pagina)
+  · avanti di nuovo
+  · indietro
+  · indietro fino in fondo
+  · testo pagina 1 sopravvive allo sfoglio
+  · doppio click veloce su avanti
+  · frecce da tastiera
+  · modalità disegno + tratto orizzontale
+  · undo / redo
+  · sfoglia in disegno
+  · torna al testo
+  · swipe (solo touch)
+  · reload: riapre sulla stessa pagina
+  · torna alla mensola
+  · mensola: il quaderno c’è
+  · riapri dalla mensola
+▶ mobile: scimmia ×25
+  · scimmia #1 tastiera →
+  · scimmia #2 disegna
+  · scimmia #3 avanti
+  · scimmia #4 tastiera →
+  · scimmia #5 swipe
+  · scimmia #6 tastiera →
+  · scimmia #7 indietro
+  · scimmia #8 indietro
+  · scimmia #9 tastiera →
+  · scimmia #10 tastiera ←
+  · scimmia #11 indietro
+  · scimmia #12 avanti
+  · scimmia #13 disegna
+  · scimmia #14 tastiera ←
+  · scimmia #15 scrivi
+  · scimmia #16 scrivi
+  · scimmia #17 indietro
+  · scimmia #18 swipe
+  · scimmia #19 scrivi
+  · scimmia #20 scrivi
+  · scimmia #21 avanti
+  · scimmia #22 tastiera ←
+  · scimmia #23 disegna
+  · scimmia #24 avanti
+  · scimmia #25 tastiera →
+
+════════════════════════════════════════
+✓ nessun bug trovato

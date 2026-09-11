@@ -1,0 +1,179 @@
+/* ── Il Quaderno — design tokens ──────────────────────────────────────────
+   Autorati in OKLCH: sui pastelli le interpolazioni sRGB/HSL virano al grigio.
+   Chroma ridotta vicino al bianco per evitare pastelli acidi.
+   I token semantici vivono in :root / [data-theme=dark]; @theme li referenzia,
+   così un solo swap di attributo ridipinge tutta l'app.                    */
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+:root {
+  color-scheme: light;
+
+  /* superfici */
+  --c-paper: oklch(97.7% 0.01 81.8);
+  --c-paper-warm: oklch(98% 0.024 88.2);
+  --c-paper-edge: oklch(94% 0.014 80);
+  --c-desk: oklch(92.9% 0.019 75.3);
+  --c-desk-deep: oklch(87% 0.024 72);
+  --c-wall: oklch(93% 0.016 68); /* intonaco caldo dietro la mensola */
+  --c-wood: oklch(82% 0.068 70);
+  --c-wood-deep: oklch(67% 0.078 65);
+
+  /* inchiostri */
+  --c-ink: oklch(37.4% 0.08 268.5);
+  --c-graphite: oklch(35.2% 0.008 70); /* neutro tiepido, mai #000 */
+  --c-ink-green: oklch(44.3% 0.059 169.6);
+  --c-ink-red: oklch(48.6% 0.129 23.2);
+  --c-ink-violet: oklch(43.2% 0.104 300.4);
+  --c-rule: oklch(85% 0.028 245.5); /* righe carta */
+  --c-margin: oklch(70% 0.11 25); /* margine rosso */
+
+  /* evidenziatori */
+  --c-hl-yellow: oklch(93.2% 0.118 96.7);
+  --c-hl-mint: oklch(90.2% 0.06 169.4);
+  --c-hl-pink: oklch(88.6% 0.066 359.3);
+
+  /* copertine */
+  --c-cover-cipria: oklch(90.2% 0.038 30);
+  --c-cover-pesca: oklch(90.7% 0.063 63.8);
+  --c-cover-burro: oklch(95.6% 0.074 95.9);
+  --c-cover-salvia: oklch(89.6% 0.033 146.7);
+  --c-cover-menta: oklch(93% 0.03 175.9);
+  --c-cover-cielo: oklch(90.9% 0.034 245.5);
+  --c-cover-lavanda: oklch(90% 0.036 301.4);
+  --c-cover-malva: oklch(89.5% 0.037 330.1);
+  --c-cover-terracotta: oklch(81.2% 0.067 42);
+  --c-cover-lino: oklch(87.1% 0.02 77.3);
+
+  /* ombre: sempre in ambra, mai grigio neutro */
+  --sh-tint: 28 18 12;
+  --sh-paper: 0 1px 2px rgb(var(--sh-tint) / 0.08), 0 8px 24px -8px rgb(var(--sh-tint) / 0.18);
+  --sh-lift: 0 2px 4px rgb(var(--sh-tint) / 0.1), 0 18px 44px -12px rgb(var(--sh-tint) / 0.26);
+  --sh-sunk: inset 0 1px 3px rgb(var(--sh-tint) / 0.12);
+
+  /* grana: un solo turbulence, riusato ovunque */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  --grain-opacity: 0.035;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* "sera in cameretta": non un'inversione, uno spostamento tonale verso l'ambra */
+  --c-paper: oklch(26.9% 0.01 61);
+  --c-paper-warm: oklch(29% 0.016 66);
+  --c-paper-edge: oklch(22% 0.009 60);
+  --c-desk: oklch(21.6% 0.007 67.4);
+  --c-desk-deep: oklch(17% 0.006 67);
+  --c-wall: oklch(24% 0.014 58);
+  --c-wood: oklch(44.9% 0.052 58.2);
+  --c-wood-deep: oklch(34% 0.045 55);
+
+  --c-ink: oklch(90.5% 0.031 88.4);
+  --c-graphite: oklch(84% 0.014 80);
+  --c-ink-green: oklch(80% 0.07 165);
+  --c-ink-red: oklch(76% 0.1 28);
+  --c-ink-violet: oklch(80% 0.075 300);
+  --c-rule: oklch(38% 0.02 240);
+  --c-margin: oklch(48% 0.08 25);
+
+  --c-hl-yellow: oklch(52% 0.09 96);
+  --c-hl-mint: oklch(50% 0.05 169);
+  --c-hl-pink: oklch(50% 0.055 359);
+
+  /* copertine: stessa hue, lightness -35%, chroma -20% */
+  --c-cover-cipria: oklch(59% 0.03 30);
+  --c-cover-pesca: oklch(59% 0.05 63.8);
+  --c-cover-burro: oklch(62% 0.059 95.9);
+  --c-cover-salvia: oklch(58% 0.026 146.7);
+  --c-cover-menta: oklch(60% 0.024 175.9);
+  --c-cover-cielo: oklch(59% 0.027 245.5);
+  --c-cover-lavanda: oklch(59% 0.029 301.4);
+  --c-cover-malva: oklch(58% 0.03 330.1);
+  --c-cover-terracotta: oklch(53% 0.054 42);
+  --c-cover-lino: oklch(57% 0.016 77.3);
+
+  --sh-tint: 0 0 0;
+  --sh-paper: 0 1px 2px rgb(var(--sh-tint) / 0.3), 0 8px 24px -8px rgb(var(--sh-tint) / 0.5);
+  --sh-lift: 0 2px 4px rgb(var(--sh-tint) / 0.34), 0 18px 44px -12px rgb(var(--sh-tint) / 0.6);
+  --grain-opacity: 0.05;
+}
+
+@theme {
+  /* ── colori ── */
+  --color-paper: var(--c-paper);
+  --color-paper-warm: var(--c-paper-warm);
+  --color-paper-edge: var(--c-paper-edge);
+  --color-desk: var(--c-desk);
+  --color-desk-deep: var(--c-desk-deep);
+  --color-wall: var(--c-wall);
+  --color-wood: var(--c-wood);
+  --color-wood-deep: var(--c-wood-deep);
+
+  --color-ink: var(--c-ink);
+  --color-graphite: var(--c-graphite);
+  --color-ink-green: var(--c-ink-green);
+  --color-ink-red: var(--c-ink-red);
+  --color-ink-violet: var(--c-ink-violet);
+  --color-rule: var(--c-rule);
+  --color-margin: var(--c-margin);
+
+  --color-hl-yellow: var(--c-hl-yellow);
+  --color-hl-mint: var(--c-hl-mint);
+  --color-hl-pink: var(--c-hl-pink);
+
+  --color-cover-cipria: var(--c-cover-cipria);
+  --color-cover-pesca: var(--c-cover-pesca);
+  --color-cover-burro: var(--c-cover-burro);
+  --color-cover-salvia: var(--c-cover-salvia);
+  --color-cover-menta: var(--c-cover-menta);
+  --color-cover-cielo: var(--c-cover-cielo);
+  --color-cover-lavanda: var(--c-cover-lavanda);
+  --color-cover-malva: var(--c-cover-malva);
+  --color-cover-terracotta: var(--c-cover-terracotta);
+  --color-cover-lino: var(--c-cover-lino);
+
+  /* ── tipografia ── */
+  --font-hand: 'Caveat Variable', 'Caveat', ui-rounded, cursive;
+  --font-ui: 'Nunito Variable', 'Nunito', ui-rounded, system-ui, sans-serif;
+
+  --text-2xs: 0.75rem;
+  --text-xs: 0.875rem;
+  --text-sm: 1rem;
+  --text-base: 1.25rem;
+  --text-lg: 1.625rem;
+  --text-xl: 2.125rem;
+
+  /* ── spazio: scala 4pt semantica ── */
+  --spacing-2xs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+  --spacing-4xl: 96px;
+
+  /* ── raggi ── */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+
+  /* ── ombre ── */
+  --shadow-paper: var(--sh-paper);
+  --shadow-lift: var(--sh-lift);
+  --shadow-sunk: var(--sh-sunk);
+
+  /* ── motion ── */
+  --ease-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-quint: cubic-bezier(0.64, 0, 0.78, 0);
+}
+
+/* Passo delle righe: l'unità fisica di tutto il quaderno.
+   Fuori da @theme perché serve anche in calc() dentro paper.css. */
+:root {
+  --rule-step: 32px;
+  --page-w: 600;
+  --page-h: 840;
+}
