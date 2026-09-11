@@ -166,7 +166,7 @@ function CameraRig({ shelves, width }: { shelves: number; width: number }) {
   useEffect(() => {
     const cam = camera as PerspectiveCamera
     const contentH = shelves * SHELF_GAP_Y + 0.5
-    const contentW = width * Math.cos(AZIMUTH) + PLANK_D * Math.sin(AZIMUTH) + 0.8
+    const contentW = width * Math.cos(AZIMUTH) + PLANK_D * Math.sin(AZIMUTH) + 0.5
     const vFov = (cam.fov * Math.PI) / 180
     const aspect = size.width / size.height
     // distanza che fa entrare sia l'altezza sia la larghezza, con un margine
