@@ -41,6 +41,11 @@ npx playwright install chromium
 
 ## Deploy su Vercel
 
+Il progetto Vercel `quaderno` è collegato a
+[github.com/simiriva95/quaderno](https://github.com/simiriva95/quaderno):
+ogni push su `main` va in produzione, ogni altro branch ha la sua preview.
+Per un deploy manuale:
+
 ```bash
 vercel --prod
 ```
