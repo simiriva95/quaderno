@@ -53,7 +53,9 @@ export default function Reader({ id }: { id: string }) {
 
   // il margine lascia posto all'astuccio laterale e alle frecce; sul telefono
   // le frecce non ci sono (angoli e swipe) e la pagina si prende tutto
-  const { ref: fitRef, scale, size: fitSize } = useFitScale(contentW, PAGE_H, wide ? 72 : 8)
+  // ai lati il margine fa posto alle frecce; sopra e sotto solo un filo d'aria:
+  // il quaderno aperto si prende tutto lo spazio che c'è
+  const { ref: fitRef, scale, size: fitSize } = useFitScale(contentW, PAGE_H, wide ? 72 : 8, 10)
   const { state: saveState, ping } = useAutosaveIndicator()
   const reflow = useTextPagination(notebook, TEXT_W, TEXT_H)
   const play = useSound()

@@ -56,8 +56,13 @@ class Session {
   async open() {
     this.ctx = await this.browser.newContext({ ...this.profile })
     this.page = await this.ctx.newPage()
-    this.page.on('console', (m) => {
-      if (m.type() === 'error') this.errors.push(m.text())
+    this.page.on('console', async (m) => {
+      if (m.type() !== 'error') return
+      // gli argomenti veri, non il formato con %s: serve sapere QUALE hook
+      const parts = await Promise.all(m.args().map((a) => a.jsonValue().catch(() => '?'))).catch(
+        () => [],
+      )
+      this.errors.push(parts.length ? parts.map(String).join(' ') : m.text())
     })
     this.page.on('pageerror', (e) => this.errors.push(`pageerror: ${e.message}`))
     await this.page.goto(base + '/#/')
@@ -482,7 +487,7 @@ async function monkey(s) {
       'zoom +',
       async () => {
         const b = s.page.locator('button[aria-label="Aumenta zoom"]:visible')
-        if (!(await b.isDisabled())) await b.click()
+        if ((await b.count()) && !(await b.isDisabled())) await b.click()
         await sleep(350)
       },
     ],
@@ -490,7 +495,7 @@ async function monkey(s) {
       'zoom −',
       async () => {
         const b = s.page.locator('button[aria-label="Riduci zoom"]:visible')
-        if (!(await b.isDisabled())) await b.click()
+        if ((await b.count()) && !(await b.isDisabled())) await b.click()
         await sleep(350)
       },
     ],
@@ -510,8 +515,9 @@ async function monkey(s) {
   }
 }
 
+const only = args.find((a) => a.startsWith('--profile='))?.split('=')[1]
 const browser = await chromium.launch({ channel: 'chromium' })
-for (const profile of PROFILES) {
+for (const profile of PROFILES.filter((p) => !only || p.name === only)) {
   const s = new Session(browser, profile)
   await s.open()
   await scripted(s)
