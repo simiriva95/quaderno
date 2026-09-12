@@ -19,10 +19,17 @@ export function Hull({
   position?: [number, number, number]
   rotation?: [number, number, number]
 }) {
+  // di sera l'inchiostro dei token è crema e i contorni leggevano come bordi
+  // bianchi: il tratto a china resta scuro, sempre
+  const dark = document.documentElement.dataset.theme === 'dark'
   return (
     <mesh scale={scale} position={position} rotation={rotation}>
       {children}
-      <meshBasicMaterial color={cssVar('--c-ink')} side={BackSide} toneMapped={false} />
+      <meshBasicMaterial
+        color={dark ? '#1F1813' : cssVar('--c-ink')}
+        side={BackSide}
+        toneMapped={false}
+      />
     </mesh>
   )
 }

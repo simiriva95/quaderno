@@ -1,4 +1,15 @@
-import { ArrowLeft, PencilLine, Type, ZoomIn, ZoomOut } from 'lucide-react'
+import {
+  ArrowLeft,
+  Eraser,
+  MoreHorizontal,
+  PencilLine,
+  Trash2,
+  Type,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { DangerButton } from '../ui/DangerButton'
 import { motion } from 'motion/react'
 import { SaveIndicator } from '../ui/SaveIndicator'
 import type { SaveState } from '../../hooks/useAutosaveIndicator'
@@ -14,6 +25,10 @@ interface Props {
   onBack: () => void
   saveState: SaveState
   zoom: { canIn: boolean; canOut: boolean; onIn: () => void; onOut: () => void; label: string }
+  /** le azioni che cancellano, dietro un menu: non si premono per sbaglio */
+  onClearPages: () => void
+  clearLabel: string
+  onDelete: () => void
 }
 
 export function NotebookHeader({
@@ -25,7 +40,25 @@ export function NotebookHeader({
   onBack,
   saveState,
   zoom,
+  onClearPages,
+  clearLabel,
+  onDelete,
 }: Props) {
+  const [menu, setMenu] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!menu) return
+    const close = (e: PointerEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setMenu(false)
+    }
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(false)
+    window.addEventListener('pointerdown', close)
+    window.addEventListener('keydown', esc)
+    return () => {
+      window.removeEventListener('pointerdown', close)
+      window.removeEventListener('keydown', esc)
+    }
+  }, [menu])
   return (
     <header className="flex items-center gap-sm px-md py-xs">
       <button
@@ -96,6 +129,47 @@ export function NotebookHeader({
         >
           <ZoomIn size={19} strokeWidth={1.75} />
         </button>
+      </div>
+
+      <div ref={menuRef} className="relative">
+        <button
+          type="button"
+          onClick={() => setMenu((m) => !m)}
+          aria-label="Altre azioni"
+          aria-expanded={menu}
+          aria-haspopup="menu"
+          className="grid size-11 place-items-center rounded-md bg-paper text-graphite shadow-paper hover:bg-desk"
+        >
+          <MoreHorizontal size={19} strokeWidth={1.75} />
+        </button>
+        {menu && (
+          <div
+            role="menu"
+            className="absolute right-0 top-full z-40 mt-2xs flex w-64 flex-col gap-2xs rounded-lg bg-paper p-xs shadow-lift"
+          >
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                onClearPages()
+                setMenu(false)
+              }}
+              className="flex h-12 items-center gap-sm rounded-md px-md text-xs text-graphite hover:bg-desk"
+            >
+              <Eraser size={17} strokeWidth={1.75} />
+              {clearLabel}
+            </button>
+            <DangerButton
+              label="Elimina questo quaderno"
+              confirmLabel="Sicuro? Sparisce per sempre"
+              icon={<Trash2 size={17} strokeWidth={1.75} />}
+              onConfirm={() => {
+                setMenu(false)
+                onDelete()
+              }}
+            />
+          </div>
+        )}
       </div>
 
       <div

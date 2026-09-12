@@ -30,6 +30,8 @@ export default function Reader({ id }: { id: string }) {
   const appendPage = useNotebooks((s) => s.appendPage)
   const setPageStrokes = useNotebooks((s) => s.setPageStrokes)
   const setLastOpenedPage = useNotebooks((s) => s.setLastOpenedPage)
+  const clearPage = useNotebooks((s) => s.clearPage)
+  const removeNotebook = useNotebooks((s) => s.removeNotebook)
 
   const shelfRect = useUi((s) => s.shelfRect)
   const [closing, setClosing] = useState(false)
@@ -340,6 +342,16 @@ export default function Reader({ id }: { id: string }) {
           onIn: zoomIn,
           onOut: zoomOut,
           label: zoomLabel,
+        }}
+        clearLabel={isSpread ? 'Svuota le due pagine aperte' : 'Svuota questa pagina'}
+        onClearPages={() => {
+          for (const i of visible) if (pages[i]) clearPage(notebook.id, i)
+          drawApis.current.forEach((api) => api.clear())
+          ping()
+        }}
+        onDelete={() => {
+          removeNotebook(notebook.id)
+          navigate('/')
         }}
       />
 

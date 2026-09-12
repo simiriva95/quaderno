@@ -1,8 +1,9 @@
-import { Download, Moon, Settings2, Sun, Upload, Volume2, VolumeX, X } from 'lucide-react'
+import { Download, Moon, Settings2, Sun, Trash2, Upload, Volume2, VolumeX, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useRef, useState } from 'react'
 import { SPRING } from '../../lib/constants'
 import { exportNotebooks, parseSnapshot } from '../../lib/storage'
+import { DangerButton } from './DangerButton'
 import { useNotebooks } from '../../store/notebooks'
 import { usePrefs, type ThemeChoice } from '../../store/prefs'
 import { useUi } from '../../store/ui'
@@ -63,7 +64,7 @@ export function SettingsSheet() {
               animate={{ y: 0, scale: 1 }}
               exit={{ y: 16, opacity: 0, transition: { duration: 0.18 } }}
               transition={SPRING}
-              className="relative m-md w-full max-w-md rounded-lg bg-paper p-lg shadow-lift"
+              className="relative m-md w-full max-w-[28rem] rounded-lg bg-paper p-lg shadow-lift"
             >
               <div className="mb-lg flex items-center justify-between">
                 <h2 className="font-hand text-lg text-ink">Impostazioni</h2>
@@ -142,6 +143,19 @@ export function SettingsSheet() {
                   }}
                 />
               </div>
+
+              {notebooks.length > 0 && (
+                <DangerButton
+                  className="mt-lg w-full"
+                  label={`Cancella tutti i quaderni (${notebooks.length})`}
+                  confirmLabel="Sicuro? Spariscono tutti, per sempre"
+                  icon={<Trash2 size={17} strokeWidth={1.75} />}
+                  onConfirm={() => {
+                    replaceAll([])
+                    showToast('Mensola vuota.')
+                  }}
+                />
+              )}
 
               <p className="mt-md text-2xs leading-relaxed text-graphite opacity-60">
                 I quaderni restano su questo dispositivo. L'importazione sostituisce quelli

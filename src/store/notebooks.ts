@@ -30,6 +30,8 @@ interface NotebooksStore {
   renameNotebook: (id: string, title: string) => void
   setPageText: (notebookId: string, pageIndex: number, text: string) => void
   setPageStrokes: (notebookId: string, pageIndex: number, strokes: Stroke[]) => void
+  /** testo e tratti via, la pagina resta */
+  clearPage: (notebookId: string, pageIndex: number) => void
   appendPage: (notebookId: string) => void
   setLastOpenedPage: (notebookId: string, index: number) => void
   replaceAll: (notebooks: Notebook[]) => void
@@ -118,6 +120,15 @@ export const useNotebooks = create<NotebooksStore>()(
       setPageStrokes: (notebookId, pageIndex, strokes) =>
         set({
           notebooks: withPage(get().notebooks, notebookId, pageIndex, (p) => ({ ...p, strokes })),
+        }),
+
+      clearPage: (notebookId, pageIndex) =>
+        set({
+          notebooks: withPage(get().notebooks, notebookId, pageIndex, (p) => ({
+            ...p,
+            text: '',
+            strokes: [],
+          })),
         }),
 
       appendPage: (notebookId) =>

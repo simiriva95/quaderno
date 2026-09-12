@@ -349,6 +349,22 @@ rimbalzavano fra quaderni adiacenti. La camera sta a sinistra, così lo slot
 trova proiettando gli otto vertici della mensola, non con la trigonometria del
 solo fronte.
 
+**Cancellare è dietro un menu, e chiede conferma sul posto.** Nel quaderno il
+"⋯" apre "Svuota le pagine aperte" ed "Elimina questo quaderno"; nelle
+impostazioni c'è "Cancella tutti i quaderni". Le azioni distruttive sono un
+`DangerButton`: al primo click si arma e chiede "Sicuro?", dopo tre secondi
+torna com'era. Niente `confirm()` di sistema in una cartoleria.
+
+**I contorni restano scuri anche di sera.** Con il token dell'inchiostro (crema
+al buio) leggevano come bordi bianchi; il tratto a china è sempre scuro.
+
+**Il perno del quaderno è lo spigolo davanti in basso.** Inclinandosi verso di
+te alza il retro invece di affondare nella tavola.
+
+**`max-w-md` non è una larghezza qui.** Il tema definisce `--spacing-md`, e in
+Tailwind v4 `max-w-md` la prende per buona: 16px. Il pannello delle
+impostazioni era una colonna di 50px da chissà quando. `max-w-[28rem]`.
+
 ## Punteggi
 
 |         | Performance | Accessibilità | Best practices |

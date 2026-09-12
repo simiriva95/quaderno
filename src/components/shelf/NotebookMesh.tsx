@@ -37,6 +37,7 @@ export function NotebookMesh({
   onHover,
 }: Props) {
   const group = useRef<Group>(null)
+  const body = useRef<Group>(null)
   const { camera, gl } = useThree()
   const outline = useRef<LineSegments>(null)
   const [hovered, setHovered] = useState(false)
@@ -71,7 +72,9 @@ export function NotebookMesh({
     const dx = camera.position.x - px
     const dz = camera.position.z
     const len = Math.hypot(dx, dz) || 1
-    g.position.set(px + (dx / len) * l, py, (dz / len) * l)
+    // il perno è lo spigolo davanti in basso: inclinandosi verso di te il
+    // quaderno alza il retro, non affonda nella mensola
+    g.position.set(px + (dx / len) * l, py - height / 2, depth / 2 + (dz / len) * l)
     // si inclina verso lo spettatore, come quando lo sfili con un dito
     g.rotation.x = tilt + (l / 0.14) * 0.12
     g.rotation.z = tilt * 0.5
@@ -80,7 +83,6 @@ export function NotebookMesh({
 
   /** Dove sta il dorso, in pixel di finestra: è da lì che parte l'apertura. */
   const screenRect = () => {
-    const g = group.current
     const canvas = gl.domElement.getBoundingClientRect()
     const toPx = (p: Vector3) => {
       const q = p.clone().project(camera)
@@ -96,7 +98,8 @@ export function NotebookMesh({
     for (const sx of [-1, 1])
       for (const sy of [-1, 1])
         corners.push(new Vector3((sx * BOOK_W) / 2, (sy * height) / 2, depth / 2))
-    const pts = corners.map((v) => toPx(g ? g.localToWorld(v) : v))
+    const b = body.current
+    const pts = corners.map((v) => toPx(b ? b.localToWorld(v) : v))
     const xs = pts.map((q) => q.x)
     const ys = pts.map((q) => q.y)
     const x = Math.min(...xs)
@@ -130,7 +133,7 @@ export function NotebookMesh({
       {/* Il materiale nasce insieme alla sua texture: assegnare una map a un
           materiale già compilato non ricompila lo shader, e il quaderno
           resterebbe bianco. Con la key three ricostruisce tutto. */}
-      <group key={maps ? 'textured' : 'plain'}>
+      <group key={maps ? 'textured' : 'plain'} ref={body} position={[0, height / 2, -depth / 2]}>
         {/* blocco delle pagine: appena più piccolo delle copertine, così dal
             taglio si vede il bordo del cartone e poi i fogli */}
         <mesh position={[0, -0.006, -0.012]}>
@@ -210,7 +213,12 @@ export function NotebookMesh({
       {/* anello di focus: disegnato in scena, non il contorno di sistema */}
       {/* raycast spento: three non guarda `visible` e per le linee usa una
           soglia di 1 unità — l'anello catturava click grandi come la mensola */}
-      <lineSegments ref={outline} visible={false} raycast={() => null}>
+      <lineSegments
+        ref={outline}
+        visible={false}
+        raycast={() => null}
+        position={[0, height / 2, -depth / 2]}
+      >
         <edgesGeometry args={[new BoxGeometry(BOOK_W + 0.05, height + 0.05, depth + 0.05)]} />
         <lineBasicMaterial color={cssVar('--c-ink')} />
       </lineSegments>
