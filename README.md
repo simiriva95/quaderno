@@ -29,15 +29,16 @@ npm install
 npm run dev
 ```
 
-| Script                        |                                                                                                                                                               |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run dev`                 | dev server                                                                                                                                                    |
-| `npm run build`               | type-check + build di produzione                                                                                                                              |
-| `npm run lint`                | oxlint + prettier --check                                                                                                                                     |
-| `npm run format`              | prettier --write                                                                                                                                              |
-| `npm run preview`             | serve `dist/` su :4173                                                                                                                                        |
-| `npm run test:e2e`            | Playwright (desktop + mobile)                                                                                                                                 |
-| `npm run debug:portale [url]` | usa l'app come una persona, senza `reducedMotion`, e segnala le violazioni degli invarianti con screenshot in `.debugger/` (default: `http://localhost:4173`) |
+| Script                        |                                                                                                                                                                                  |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev`                 | dev server                                                                                                                                                                       |
+| `npm run build`               | type-check + build di produzione                                                                                                                                                 |
+| `npm run lint`                | oxlint + prettier --check                                                                                                                                                        |
+| `npm run format`              | prettier --write                                                                                                                                                                 |
+| `npm run preview`             | serve `dist/` su :4173                                                                                                                                                           |
+| `npm run test:e2e`            | Playwright (desktop + mobile)                                                                                                                                                    |
+| `npm run audit [url]`         | percorre tutti i casi d'uso su quattro profili e scrive `.audit/report.md` (axe, bersagli, contrasto, console, tempi, bundle); la sintesi con il piano è in [AUDIT.md](AUDIT.md) |
+| `npm run debug:portale [url]` | usa l'app come una persona, senza `reducedMotion`, e segnala le violazioni degli invarianti con screenshot in `.debugger/` (default: `http://localhost:4173`)                    |
 
 I test end-to-end richiedono il browser di Playwright:
 

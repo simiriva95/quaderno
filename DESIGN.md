@@ -365,6 +365,27 @@ te alza il retro invece di affondare nella tavola.
 Tailwind v4 `max-w-md` la prende per buona: 16px. Il pannello delle
 impostazioni era una colonna di 50px da chissà quando. `max-w-[28rem]`.
 
+**I colori del disegno erano tutti neri.** Il canvas 2D non risolve `var(--c-ink)`:
+l'assegnazione a `fillStyle` viene ignorata e resta `#000`. Sei colori nell'astuccio,
+nessuno colorava, e di sera i tratti sparivano sulla carta scura. Ora il token si
+risolve al momento del paint con lo stesso `cssVar()` della mensola, così i tratti
+seguono anche il tema. Trovato dalla revisione UX dell'audit, non dai test: nessuno
+guardava il colore di un pixel.
+
+**L'astuccio sul telefono sta sotto la pagina, non sopra.** Era assoluto in basso e
+copriva l'ultimo terzo del foglio; la riga del lettore è una colonna sotto `md`.
+
+**L'evidenziatore avvolge nodo per nodo.** Un solo `mark` attorno a una selezione su
+più righe portava dentro blocchi e ritorni a capo, e con `box-decoration-break: clone`
+lasciava strisce gialle sulle righe vuote.
+
+**La baseline del titolo cade sulla seconda riga.** Con la line-height piena di due
+righe il titolo galleggiava a metà; padding sopra e line-height ridotta della stessa
+misura lo appoggiano sulla riga. Misurato per i tre corpi.
+
+**L'audit è un agente in due parti** (`npm run audit` + revisione euristica): la sintesi e
+il piano stanno in `AUDIT.md`.
+
 ## Punteggi
 
 |         | Performance | Accessibilità | Best practices |

@@ -21,15 +21,52 @@ export function wrapSelection(tag: string, className?: string): void {
     return
   }
 
+  // un solo nodo di testo: si avvolge e basta. Se la selezione contiene
+  // elementi (a capo, blocchi, caselle) si passa nodo per nodo.
+  const simple =
+    range.startContainer === range.endContainer && range.startContainer.nodeType === Node.TEXT_NODE
   try {
+    if (!simple) throw new Error('multi')
     range.surroundContents(el)
+    sel.removeAllRanges()
+    sel.selectAllChildren(el)
+    return
   } catch {
-    // selezione a cavallo di più nodi: estrai e reinserisci
-    el.appendChild(range.extractContents())
-    range.insertNode(el)
+    // selezione a cavallo di più nodi: si avvolge OGNI nodo di testo per
+    // conto suo, saltando quelli fatti solo di spazi e ritorni a capo. Un
+    // unico wrapper attorno al frammento portava dentro blocchi e righe vuote,
+    // e l'evidenziatore lasciava strisce gialle dove non c'erano parole.
+  }
+  const start = range.startContainer
+  const end = range.endContainer
+  if (start.nodeType === Node.TEXT_NODE && range.startOffset > 0)
+    (start as Text).splitText(range.startOffset)
+  if (end.nodeType === Node.TEXT_NODE && range.endOffset < (end as Text).length)
+    (end as Text).splitText(range.endOffset)
+
+  const walker = document.createTreeWalker(range.commonAncestorContainer, NodeFilter.SHOW_TEXT)
+  const texts: Text[] = []
+  let node: Node | null
+  while ((node = walker.nextNode())) {
+    if (range.intersectsNode(node) && (node.textContent ?? '').replace(/[\s\u200B]/g, '') !== '')
+      texts.push(node as Text)
+  }
+  // il primo nodo dopo lo split del confine iniziale è quello selezionato
+  const wrapped: HTMLElement[] = []
+  for (const t of texts) {
+    if (start.nodeType === Node.TEXT_NODE && t === start && range.startOffset > 0) continue
+    const w = el.cloneNode(false) as HTMLElement
+    t.replaceWith(w)
+    w.appendChild(t)
+    wrapped.push(w)
   }
   sel.removeAllRanges()
-  sel.selectAllChildren(el)
+  if (wrapped.length) {
+    const r = document.createRange()
+    r.setStartBefore(wrapped[0]!)
+    r.setEndAfter(wrapped[wrapped.length - 1]!)
+    sel.addRange(r)
+  }
 }
 
 /** Il cancellino del testo: toglie la formattazione, lascia le parole. */

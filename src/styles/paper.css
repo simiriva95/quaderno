@@ -203,7 +203,18 @@
   display: block;
   font-size: calc(var(--hand-size, 26px) * 1.35);
   font-weight: 700;
-  line-height: calc(var(--rule-step) * 2);
+  /* due righe esatte, ma la baseline deve cadere sulla SECONDA riga: con la
+     line-height piena il titolo galleggiava a metà. Il padding sposta la
+     baseline in basso e la line-height cala della stessa misura. Misurato. */
+  padding-top: var(--hand-size, 26px);
+  line-height: calc(var(--rule-step) * 2 - var(--hand-size, 26px));
+}
+
+/* un evidenziatore su una riga vuota è una macchia gialla senza parole */
+.hand-text mark:empty,
+.hand-text mark:has(> br:only-child) {
+  padding: 0;
+  background: none;
 }
 
 /* Checkbox disegnata a mano: quadratino storto, spunta tracciata */

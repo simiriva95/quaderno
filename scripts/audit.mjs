@@ -312,8 +312,7 @@ class Audit {
         [0.6, 0.6],
       ])
       await p
-        .getByRole('radio', { name: /Pennarello|Marker/i })
-        .first()
+        .locator('[aria-label="Pennarello"]')
         .click()
         .catch(() => {})
       await draw([
@@ -321,7 +320,7 @@ class Audit {
         [0.7, 0.7],
       ])
       await p
-        .getByRole('radio', { name: /Evidenziatore/i })
+        .locator('[aria-label="Evidenziatore"]')
         .first()
         .click()
         .catch(() => {})

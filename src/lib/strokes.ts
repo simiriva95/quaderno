@@ -1,6 +1,7 @@
 import { getStroke } from 'perfect-freehand'
 import type { DrawTool, Stroke, StrokePoint } from '../types'
 import { STROKE_SIZES } from './constants'
+import { cssVar } from './covers'
 
 interface ToolProfile {
   /** moltiplicatore sullo spessore base del preset */
@@ -87,7 +88,12 @@ export function paintStroke(ctx: CanvasRenderingContext2D, stroke: Stroke): void
   ctx.save()
   ctx.globalCompositeOperation = p.blend
   ctx.globalAlpha = p.opacity
-  ctx.fillStyle = stroke.color
+  // il colore è salvato come token (`var(--c-ink)`): il canvas non sa
+  // leggere le variabili CSS e dipingeva tutto nero. Si risolve qui, così i
+  // tratti seguono anche il tema: blu di giorno, chiaro di sera.
+  ctx.fillStyle = stroke.color.startsWith('var(')
+    ? cssVar(stroke.color.slice(4, -1).trim())
+    : stroke.color
   ctx.fill(strokePath(stroke))
   ctx.restore()
 }

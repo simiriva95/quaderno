@@ -358,7 +358,7 @@ export default function Reader({ id }: { id: string }) {
       {/* Una riga: [astuccio] [freccia] [pagina] [freccia]. La pagina misura lo
           spazio che resta fra i vicini, così niente le si sovrappone mai. */}
       <div
-        className="relative flex min-h-0 min-w-0 flex-1 items-center gap-xs overflow-hidden px-xs md:gap-sm md:px-sm"
+        className="relative flex min-h-0 min-w-0 flex-1 flex-col items-stretch gap-xs overflow-hidden px-xs md:flex-row md:items-center md:gap-sm md:px-sm"
         onTouchStart={(e) => (swipe.current = e.touches[0]?.clientX ?? 0)}
         onTouchEnd={(e) => {
           // un tratto orizzontale di matita non è uno swipe
@@ -367,7 +367,10 @@ export default function Reader({ id }: { id: string }) {
           if (Math.abs(dx) > 60) go(dx < 0 ? 1 : -1)
         }}
       >
-        <div ref={fitRef} className="relative grid h-full min-w-0 flex-1 place-items-center">
+        <div
+          ref={fitRef}
+          className="relative grid min-h-0 min-w-0 flex-1 place-items-center md:h-full"
+        >
           {/* le frecce stanno accanto al quaderno, non ai bordi dello schermo */}
           <NavArrow
             side="left"
@@ -475,7 +478,7 @@ export default function Reader({ id }: { id: string }) {
         </div>
 
         {drawing && (
-          <div className="absolute inset-x-0 bottom-md z-30 flex justify-center md:static md:order-first md:shrink-0">
+          <div className="z-30 flex shrink-0 justify-center pb-xs md:order-first md:pb-0">
             <PencilCase
               onUndo={() => activeApi()?.undo()}
               onRedo={() => activeApi()?.redo()}
