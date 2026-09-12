@@ -114,7 +114,7 @@ export default function Atelier() {
                 type="button"
                 aria-pressed={!cover.sticker}
                 onClick={() => patch({ sticker: undefined })}
-                className={`h-11 rounded-md px-sm text-xs ${!cover.sticker ? 'bg-paper text-ink shadow-paper' : 'text-graphite opacity-70'}`}
+                className={`h-11 rounded-md px-sm text-xs ${!cover.sticker ? 'bg-paper text-ink shadow-paper' : 'text-graphite'}`}
               >
                 Nessuno
               </button>
@@ -206,7 +206,7 @@ function Chip({ active, onClick, label }: { active: boolean; onClick: () => void
       aria-pressed={active}
       onClick={onClick}
       className={`h-11 rounded-md px-md text-xs transition-colors ${
-        active ? 'bg-paper text-ink shadow-paper' : 'text-graphite opacity-70 hover:opacity-100'
+        active ? 'bg-paper text-ink shadow-paper' : 'text-graphite hover:bg-paper/60'
       }`}
     >
       {label}

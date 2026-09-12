@@ -101,7 +101,7 @@ export function SettingsSheet() {
                       aria-pressed={theme === id}
                       onClick={() => setTheme(id)}
                       className={`flex h-11 flex-1 items-center justify-center gap-2xs rounded-md text-xs ${
-                        theme === id ? 'bg-desk text-ink' : 'text-graphite opacity-70'
+                        theme === id ? 'bg-desk text-ink' : 'text-graphite'
                       }`}
                     >
                       <Icon size={17} strokeWidth={1.75} />

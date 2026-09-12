@@ -89,8 +89,10 @@ class Session {
     return all.find((n) => n.id === id)
   }
   label() {
+    // due <p> nell'header (riga desktop e riga telefono): si legge quella visibile
     return this.page
-      .locator('header p')
+      .locator('header p:visible')
+      .first()
       .textContent()
       .catch(() => null)
   }
@@ -140,7 +142,7 @@ class Session {
 
     // 4. mai una scrollbar dentro la carta
     const overflow = await p.evaluate(() =>
-      Array.from(document.querySelectorAll('[contenteditable]')).map(
+      Array.from(document.querySelectorAll('[contenteditable="true"]')).map(
         (el) => el.scrollHeight - el.clientHeight,
       ),
     )
@@ -148,7 +150,7 @@ class Session {
 
     // 5. il testo a schermo coincide con lo storage (per le pagine visibili)
     const shown = await p.evaluate(() =>
-      Array.from(document.querySelectorAll('[contenteditable]')).map((el) => ({
+      Array.from(document.querySelectorAll('[contenteditable="true"]')).map((el) => ({
         page: Number(el.getAttribute('aria-label')?.match(/\d+/)?.[0]) - 1,
         text: el.textContent,
       })),
@@ -164,11 +166,9 @@ class Session {
     }
 
     // zoomati, pagina fuori dal viewport e frecce sempre attive sono voluti
-    const zoomed =
-      (await p
-        .locator('[aria-live=polite]')
-        .textContent()
-        .catch(() => 'Tutto')) !== 'Tutto'
+    // zoomati ⇔ la lente "Riduci zoom" visibile è attiva
+    const zoutBtn = p.locator('button[aria-label="Riduci zoom"]:visible').first()
+    const zoomed = (await zoutBtn.count()) > 0 && !(await zoutBtn.isDisabled().catch(() => true))
 
     // 6. la pagina sta dentro il viewport
     const box = await p.locator('.paper').first().boundingBox()
