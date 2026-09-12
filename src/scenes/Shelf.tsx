@@ -116,7 +116,10 @@ export default function Shelf() {
         role="application"
         aria-label="Mensola dei quaderni. Frecce per scegliere, Invio per aprire."
       >
-        {notebooks.length === 0 ? (
+        {/* La mensola vuota è comunque la stanza in 3D: il posto tratteggiato
+            aspetta, la tazza e la pianta ci sono già. Il 2D resta per chi non
+            ha WebGL o preferisce meno movimento. */}
+        {notebooks.length === 0 && !use3D ? (
           <ShelfEmpty onCreate={add} />
         ) : use3D ? (
           <Suspense fallback={<ShelfSkeleton />}>
@@ -139,6 +142,19 @@ export default function Shelf() {
             onOpen={open}
             onAdd={add}
           />
+        )}
+
+        {notebooks.length === 0 && use3D && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-[7%] flex flex-col items-center gap-sm">
+            <p className="font-hand text-lg text-ink">La mensola aspetta il primo quaderno.</p>
+            <button
+              type="button"
+              onClick={add}
+              className="pointer-events-auto h-14 rounded-md bg-ink px-xl text-sm font-semibold text-paper shadow-lift transition-transform hover:-translate-y-0.5"
+            >
+              Crea il tuo primo quaderno
+            </button>
+          </div>
         )}
 
         <AnimatePresence>
