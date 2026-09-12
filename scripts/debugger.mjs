@@ -120,7 +120,9 @@ class Session {
     if (!m) await this.bug('etichetta pagina illeggibile', JSON.stringify(label))
     else {
       const [, first, , tot] = m.map(Number)
-      if (tot !== nb.pages.length)
+      // in doppia pagina la destra si vede (e si conta) anche se non è ancora nata
+      const spread = this.profile.viewport.width >= 900
+      if (tot !== nb.pages.length && !(spread && tot === nb.pages.length + 1))
         await this.bug('etichetta: totale pagine ≠ storage', `${tot} vs ${nb.pages.length}`)
       if (first - 1 !== nb.lastOpenedPageIndex)
         await this.bug(

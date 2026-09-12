@@ -65,7 +65,7 @@ export function NotebookHeader({
         type="button"
         onClick={onBack}
         aria-label="Torna alla mensola"
-        className="flex h-11 items-center gap-2xs rounded-md px-sm text-xs text-graphite transition-colors hover:bg-paper"
+        className="flex h-11 min-w-11 items-center gap-2xs rounded-md px-sm text-xs text-graphite transition-colors hover:bg-paper"
       >
         <ArrowLeft size={18} strokeWidth={1.75} />
         <span className="hidden sm:inline">Mensola</span>
@@ -75,7 +75,7 @@ export function NotebookHeader({
         value={title}
         onChange={(e) => onTitleChange(e.target.value)}
         aria-label="Titolo del quaderno"
-        className="min-w-0 flex-1 truncate rounded-sm bg-transparent px-2xs font-hand text-lg text-ink outline-none hover:bg-paper/60 focus:bg-paper"
+        className="h-11 min-w-0 flex-1 truncate rounded-sm bg-transparent px-2xs font-hand text-lg text-ink outline-none hover:bg-paper/60 focus:bg-paper"
       />
 
       <SaveIndicator state={saveState} />

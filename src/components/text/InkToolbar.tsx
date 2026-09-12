@@ -53,7 +53,7 @@ export function InkToolbar({ getEditor, onChanged }: Props) {
           aria-pressed={ink === id}
           animate={{ y: ink === id ? -4 : 0 }}
           transition={SPRING}
-          className="grid size-11 place-items-center rounded-sm"
+          className="grid size-11 shrink-0 place-items-center rounded-sm"
           onClick={() => {
             setInk(id)
             run(() => wrapSelection('span', INK_CLASS[id]))
@@ -70,7 +70,7 @@ export function InkToolbar({ getEditor, onChanged }: Props) {
           key={h.cls}
           type="button"
           aria-label={h.label}
-          className="grid size-11 place-items-center rounded-sm"
+          className="grid size-11 shrink-0 place-items-center rounded-sm"
           onClick={() => run(() => wrapSelection('mark', h.cls))}
         >
           <span
@@ -84,7 +84,7 @@ export function InkToolbar({ getEditor, onChanged }: Props) {
 
       {/* corpo della scrittura: tre "A" a grandezza crescente, come su un
           e-reader. Il passo delle righe non cambia, cambia l'inchiostro. */}
-      <div role="radiogroup" aria-label="Corpo del testo" className="flex items-center">
+      <div role="radiogroup" aria-label="Corpo del testo" className="flex shrink-0 items-center">
         {(Object.keys(HAND_SIZES) as TextSize[]).map((k, i) => (
           <button
             key={k}
@@ -94,7 +94,7 @@ export function InkToolbar({ getEditor, onChanged }: Props) {
             aria-label={HAND_SIZES[k].label}
             title={HAND_SIZES[k].label}
             onClick={() => setTextSize(k)}
-            className={`grid size-11 place-items-center rounded-sm font-hand transition-colors hover:bg-desk ${
+            className={`grid size-11 shrink-0 place-items-center rounded-sm font-hand transition-colors hover:bg-desk ${
               textSize === k ? 'bg-desk text-ink' : 'text-graphite'
             }`}
             style={{ fontSize: 14 + i * 5, lineHeight: 1 }}
@@ -156,7 +156,7 @@ function ToolButton({
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="grid size-11 place-items-center rounded-sm text-graphite transition-colors hover:bg-desk"
+      className="grid size-11 shrink-0 place-items-center rounded-sm text-graphite transition-colors hover:bg-desk"
     >
       {children}
     </button>

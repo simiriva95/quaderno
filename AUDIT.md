@@ -18,7 +18,7 @@ Questo file è la sintesi; si rigenera rilanciando lo script e rifacendo la revi
 | testi < 12px              | 0       | 0            | 0      | 0        |
 | violazioni axe distinte   | 9       | 6            | 9      | 9        |
 
-Violazioni axe ricorrenti: contrasto delle etichette da 12px al 60% (atelier, impostazioni,
+Dopo la fascia "subito" (12/09, secondo giro dell'audit): nessuna violazione axe in nessun passo. Restano sotto 44px solo la lista `sr-only` della mensola e l'input file nascosto, entrambi voluti. Le violazioni del primo giro erano: contrasto delle etichette da 12px al 60% (atelier, impostazioni,
 conteggio quaderni), `aria-label` su un `div` (anteprima carta), checkbox del to-do e
 `input type=file` senza etichetta, `role=menu` con un figlio che non è `menuitem`, nessun `h1`
 nel quaderno aperto. Bersagli sotto 44px: solo la lista `sr-only` della mensola (voluta) e le
