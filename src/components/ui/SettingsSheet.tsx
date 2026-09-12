@@ -5,13 +5,14 @@ import { SPRING } from '../../lib/constants'
 import { exportNotebooks, parseSnapshot } from '../../lib/storage'
 import { DangerButton } from './DangerButton'
 import { useNotebooks } from '../../store/notebooks'
+import type { Notebook } from '../../types'
 import { usePrefs, type ThemeChoice } from '../../store/prefs'
 import { useUi } from '../../store/ui'
 
 const THEMES: { id: ThemeChoice; label: string; Icon: typeof Sun }[] = [
   { id: 'light', label: 'Giorno', Icon: Sun },
   { id: 'dark', label: 'Sera', Icon: Moon },
-  { id: 'system', label: 'Come il sistema', Icon: Settings2 },
+  { id: 'system', label: 'Sistema', Icon: Settings2 },
 ]
 
 export function SettingsSheet() {
@@ -22,14 +23,26 @@ export function SettingsSheet() {
   const replaceAll = useNotebooks((s) => s.replaceAll)
   const showToast = useUi((s) => s.showToast)
 
+  // Il file letto aspetta una decisione: aggiungere ai propri (default) o
+  // sostituirli. Prima l'import rimpiazzava tutto al volo, senza chiedere.
+  const [pending, setPending] = useState<Notebook[] | null>(null)
   const importFile = async (file: File) => {
     try {
       const imported = parseSnapshot(await file.text())
-      replaceAll(imported)
-      showToast(`Importati ${imported.length} quaderni.`)
+      if (notebooks.length === 0) {
+        replaceAll(imported)
+        showToast(`Importati ${imported.length} quaderni.`)
+      } else setPending(imported)
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Non riesco a leggere questo file.')
     }
+  }
+  const merge = (imported: Notebook[]) => {
+    const byId = new Map(notebooks.map((n) => [n.id, n]))
+    for (const n of imported) byId.set(n.id, n)
+    replaceAll(Array.from(byId.values()))
+    showToast(`Aggiunti ${imported.length} quaderni.`)
+    setPending(null)
   }
 
   return (
@@ -79,9 +92,7 @@ export function SettingsSheet() {
               </div>
 
               <fieldset className="mb-lg">
-                <legend className="mb-xs text-2xs font-semibold text-graphite opacity-70">
-                  Luce
-                </legend>
+                <legend className="mb-xs text-xs font-semibold text-graphite">Luce</legend>
                 <div className="flex gap-2xs">
                   {THEMES.map(({ id, label, Icon }) => (
                     <button
@@ -134,6 +145,7 @@ export function SettingsSheet() {
                 <input
                   ref={fileRef}
                   type="file"
+                  aria-label="File da importare"
                   accept="application/json,.json"
                   className="sr-only"
                   onChange={(e) => {
@@ -143,6 +155,41 @@ export function SettingsSheet() {
                   }}
                 />
               </div>
+
+              {pending && (
+                <div className="mt-md flex flex-col gap-2xs rounded-md bg-desk p-sm">
+                  <p className="text-xs text-graphite">
+                    Nel file ci sono {pending.length} quaderni. Li aggiungo ai tuoi (
+                    {notebooks.length}) o li metto al posto loro?
+                  </p>
+                  <div className="flex gap-2xs">
+                    <button
+                      type="button"
+                      onClick={() => merge(pending)}
+                      className="flex h-12 flex-1 items-center justify-center rounded-md bg-ink text-xs font-semibold text-paper"
+                    >
+                      Aggiungi
+                    </button>
+                    <DangerButton
+                      className="flex-1 justify-center"
+                      label="Sostituisci tutto"
+                      confirmLabel="Sicuro? I tuoi spariscono"
+                      onConfirm={() => {
+                        replaceAll(pending)
+                        showToast(`Importati ${pending.length} quaderni.`)
+                        setPending(null)
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPending(null)}
+                      className="h-12 rounded-md px-sm text-xs text-graphite"
+                    >
+                      Annulla
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {notebooks.length > 0 && (
                 <DangerButton
@@ -157,9 +204,9 @@ export function SettingsSheet() {
                 />
               )}
 
-              <p className="mt-md text-2xs leading-relaxed text-graphite opacity-60">
-                I quaderni restano su questo dispositivo. L'importazione sostituisce quelli
-                esistenti: esporta prima, se vuoi tenerli.
+              <p className="mt-md text-xs leading-relaxed text-graphite">
+                I quaderni restano su questo dispositivo. Esporta ogni tanto: è il tuo backup.
+                Importando puoi aggiungere o sostituire.
               </p>
             </motion.div>
           </motion.div>

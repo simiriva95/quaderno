@@ -1,6 +1,7 @@
 import { ArrowLeft, Check } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 import { useNavigate } from '../lib/router'
 import { NotebookPreview } from '../components/atelier/NotebookPreview'
 import { Sticker } from '../components/atelier/Stickers'
@@ -32,6 +33,8 @@ export default function Atelier() {
   const [title, setTitle] = useState('')
   const [cover, setCover] = useState(defaultCover())
   const [paper, setPaper] = useState<PaperKind>('lined')
+  // sul telefono l'anteprima è piccola e fissa in alto; su schermo largo è la scrivania
+  const wide = useMediaQuery('(min-width: 1024px)')
 
   const patch = (p: Partial<typeof cover>) => setCover((c) => ({ ...c, ...p }))
 
@@ -50,18 +53,21 @@ export default function Atelier() {
         <h1 className="font-hand text-lg text-ink">Un quaderno nuovo</h1>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-xl px-md pb-4xl lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:items-start">
-        {/* la scrivania: il quaderno al centro, grande, che risponde a ogni scelta */}
-        <div className="flex flex-col items-center gap-lg py-xl">
+      <div className="mx-auto grid max-w-6xl gap-x-xl px-md pb-xl lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:items-start">
+        {/* la scrivania: il quaderno al centro, grande, che risponde a ogni
+            scelta. Sul telefono resta fisso in alto, piccolo, mentre si scorre
+            il modulo: personalizzare senza vedere il risultato non ha senso. */}
+        <div className="sticky top-0 z-10 flex flex-row items-center justify-center gap-lg bg-desk py-sm lg:static lg:flex-col lg:py-md">
           <NotebookPreview
             cover={cover}
             title={title}
             pulseKey={`${cover.color}-${cover.pattern}-${cover.spineColor}`}
-            width={280}
+            width={wide ? 300 : 110}
           />
           <div
-            className="overflow-hidden rounded-md shadow-paper"
+            className="hidden overflow-hidden rounded-md shadow-paper lg:block"
             style={{ width: 180, height: 252 }}
+            role="img"
             aria-label={`Anteprima della carta: ${PAPERS.find((p) => p.id === paper)?.label}`}
           >
             <div style={{ transform: 'scale(0.3)', transformOrigin: 'top left' }}>
@@ -70,7 +76,7 @@ export default function Atelier() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-lg pb-xl">
+        <div className="flex flex-col gap-lg">
           <Field label="Come lo chiami?">
             <input
               value={title}
@@ -158,23 +164,26 @@ export default function Atelier() {
             Elastico di chiusura
           </label>
 
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.98 }}
-            transition={SPRING}
-            onClick={() => {
-              const id = createNotebook({
-                title: title.trim() || 'Senza titolo',
-                cover,
-                paper,
-              })
-              navigate(`/q/${id}`)
-            }}
-            className="flex h-14 items-center justify-center gap-xs rounded-md bg-ink px-lg text-sm font-semibold text-paper shadow-lift"
-          >
-            <Check size={20} strokeWidth={2} />
-            Metti sulla mensola
-          </motion.button>
+          {/* il pulsante resta a portata: su portatile e tablet finiva sotto la piega */}
+          <div className="sticky bottom-0 z-10 -mx-md bg-desk/90 px-md py-sm backdrop-blur-sm">
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.98 }}
+              transition={SPRING}
+              onClick={() => {
+                const id = createNotebook({
+                  title: title.trim() || 'Senza titolo',
+                  cover,
+                  paper,
+                })
+                navigate(`/q/${id}`)
+              }}
+              className="flex h-14 w-full items-center justify-center gap-xs rounded-md bg-ink px-lg text-sm font-semibold text-paper shadow-lift"
+            >
+              <Check size={20} strokeWidth={2} />
+              Metti sulla mensola
+            </motion.button>
+          </div>
         </div>
       </div>
     </main>
@@ -184,7 +193,7 @@ export default function Atelier() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-xs">
-      <h2 className="text-2xs font-semibold tracking-wide text-graphite opacity-70">{label}</h2>
+      <h2 className="text-xs font-semibold tracking-wide text-graphite">{label}</h2>
       {children}
     </section>
   )

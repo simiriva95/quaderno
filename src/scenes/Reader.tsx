@@ -318,13 +318,15 @@ export default function Reader({ id }: { id: string }) {
   const rightIndex = leaf?.direction === 1 && pending !== null ? pending + 1 : index + 1
   const singleIndex = leaf?.direction === 1 && pending !== null ? pending : index
   const visible = isSpread ? [leftIndex, rightIndex] : [singleIndex]
-  const pageLabel =
-    isSpread && index + 1 < total
-      ? `Pagine ${index + 1}–${index + 2} di ${total}`
-      : `Pagina ${index + 1} di ${total}`
+  // in doppia pagina la destra si vede anche se non è ancora nata: conta
+  const shown = isSpread ? Math.max(total, index + 2) : total
+  const pageLabel = isSpread
+    ? `Pagine ${index + 1}–${index + 2} di ${shown}`
+    : `Pagina ${index + 1} di ${shown}`
 
   return (
     <main className="flex h-dvh flex-col overflow-hidden bg-desk">
+      <h1 className="sr-only">{notebook.title || 'Quaderno'}</h1>
       <NotebookHeader
         title={notebook.title}
         onTitleChange={(t) => renameNotebook(notebook.id, t)}
@@ -358,7 +360,7 @@ export default function Reader({ id }: { id: string }) {
       {/* Una riga: [astuccio] [freccia] [pagina] [freccia]. La pagina misura lo
           spazio che resta fra i vicini, così niente le si sovrappone mai. */}
       <div
-        className="relative flex min-h-0 min-w-0 flex-1 flex-col items-stretch gap-xs overflow-hidden px-xs md:flex-row md:items-center md:gap-sm md:px-sm"
+        className="relative flex min-h-0 min-w-0 flex-1 items-center gap-xs overflow-hidden px-xs md:gap-sm md:px-sm"
         onTouchStart={(e) => (swipe.current = e.touches[0]?.clientX ?? 0)}
         onTouchEnd={(e) => {
           // un tratto orizzontale di matita non è uno swipe
@@ -369,7 +371,7 @@ export default function Reader({ id }: { id: string }) {
       >
         <div
           ref={fitRef}
-          className="relative grid min-h-0 min-w-0 flex-1 place-items-center md:h-full"
+          className="relative grid min-h-0 min-w-0 flex-1 self-stretch place-items-center"
         >
           {/* le frecce stanno accanto al quaderno, non ai bordi dello schermo */}
           <NavArrow
@@ -417,15 +419,17 @@ export default function Reader({ id }: { id: string }) {
                   const side = isSpread ? (slot === 0 ? 'left' : 'right') : 'single'
                   return (
                     <div key={`${pageIndex}-${slot}`} className="relative">
-                      <PaperPage
-                        paper={notebook.paper}
-                        side={side}
-                        number={page ? pageIndex + 1 : undefined}
-                      >
-                        {page && drawing && (
+                      <PaperPage paper={notebook.paper} side={side} number={pageIndex + 1}>
+                        {/* Testo e tratti convivono sempre, come su carta: in
+                            disegno il testo è sotto, in sola lettura; in testo i
+                            tratti restano visibili ma la matita è posata. Anche una
+                            pagina che ancora non esiste si scrive: nasce al primo
+                            segno (withPage la crea). */}
+                        {(drawing || (page?.strokes.length ?? 0) > 0) && (
                           <DrawCanvas
+                            readOnly={!drawing}
                             pageIndex={pageIndex}
-                            strokes={page.strokes}
+                            strokes={page?.strokes ?? []}
                             onCommit={(strokes) => {
                               setPageStrokes(notebook.id, pageIndex, strokes)
                               ping()
@@ -438,10 +442,11 @@ export default function Reader({ id }: { id: string }) {
                             onActivate={setActiveDrawPage}
                           />
                         )}
-                        {page && !drawing && (
+                        {(!drawing || (page?.text ?? '') !== '') && (
                           <TextPage
                             pageIndex={pageIndex}
-                            html={page.text}
+                            readOnly={drawing}
+                            html={page?.text ?? ''}
                             caretTarget={caretTarget}
                             onCaretApplied={() => setCaretTarget(null)}
                             onInput={(html, caret) => handleInput(pageIndex, html, caret)}
@@ -476,18 +481,6 @@ export default function Reader({ id }: { id: string }) {
             onClick={() => go(1)}
           />
         </div>
-
-        {drawing && (
-          <div className="z-30 flex shrink-0 justify-center pb-xs md:order-first md:pb-0">
-            <PencilCase
-              onUndo={() => activeApi()?.undo()}
-              onRedo={() => activeApi()?.redo()}
-              onClear={() => activeApi()?.clear()}
-              canUndo={(pages[activeDrawPage]?.strokes.length ?? 0) > 0}
-              canRedo={activeApi()?.canRedo ?? false}
-            />
-          </div>
-        )}
       </div>
 
       {closing && shelfRect && (
@@ -499,11 +492,18 @@ export default function Reader({ id }: { id: string }) {
         />
       )}
 
-      {/* L'astuccio sta di lato su desktop e in basso su mobile: in colonna,
-          dentro la barra inferiore, schiacciava la pagina. Il portapenne del
-          testo resta invece orizzontale — è un vassoio, non un astuccio. */}
-      {mode === 'text' && (
-        <div className="flex justify-center pb-md">
+      {/* Lo stesso vassoio in basso per testo e disegno: la pagina non si
+          sposta quando prendi la matita. Altezza fissa, contenuto che cambia. */}
+      <div className="flex h-[5.25rem] shrink-0 items-start justify-center pb-xs">
+        {drawing ? (
+          <PencilCase
+            onUndo={() => activeApi()?.undo()}
+            onRedo={() => activeApi()?.redo()}
+            onClear={() => activeApi()?.clear()}
+            canUndo={(pages[activeDrawPage]?.strokes.length ?? 0) > 0}
+            canRedo={activeApi()?.canRedo ?? false}
+          />
+        ) : (
           <InkToolbar
             getEditor={() =>
               editorsRef.current?.querySelector<HTMLElement>('[contenteditable="true"]') ?? null
@@ -513,8 +513,8 @@ export default function Reader({ id }: { id: string }) {
               if (el) handleInput(visible[0] ?? 0, el.innerHTML, null)
             }}
           />
-        </div>
-      )}
+        )}
+      </div>
     </main>
   )
 }

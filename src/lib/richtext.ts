@@ -88,4 +88,4 @@ export function clearFormatting(root: HTMLElement): void {
 }
 
 export const TODO_HTML =
-  '<label class="todo" contenteditable="false"><input type="checkbox" /></label>&nbsp;'
+  '<label class="todo" contenteditable="false"><input type="checkbox" aria-label="Fatto" /></label>&nbsp;'

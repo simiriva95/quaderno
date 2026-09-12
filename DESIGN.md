@@ -386,6 +386,26 @@ misura lo appoggiano sulla riga. Misurato per i tre corpi.
 **L'audit è un agente in due parti** (`npm run audit` + revisione euristica): la sintesi e
 il piano stanno in `AUDIT.md`.
 
+**Un solo vassoio in basso, per testo e disegno.** L'astuccio laterale era un
+oggetto bello ma faceva muovere la pagina: montato solo in disegno, cambiava il
+contenitore che `useFitScale` misura. Ora astuccio e portapenne stanno nello
+stesso slot, alto uguale, e la pagina non si sposta. Sul telefono le barre sono
+una riga che scorre, non tre righe.
+
+**Testo e tratti convivono.** In disegno il testo resta sotto, in sola lettura;
+in testo i tratti si vedono con la matita posata. Prima i due layer si
+escludevano e prendere appunti a mano sopra il testo era impossibile.
+
+**La pagina destra si scrive anche se non è nata.** `withPage` la crea al primo
+segno: su carta si scrive dove si vuole.
+
+**Header del telefono su due righe.** Titolo intero sopra; lente, "Pagina 2 di 5"
+e T/matita sotto. Il gruppo di modalità è un componente con `layoutId` diverso
+per riga, o `motion` litigherebbe fra i due.
+
+**Importare chiede.** "Aggiungi" (per `id`, default) o "Sostituisci tutto" con
+conferma. Prima rimpiazzava tutto al volo.
+
 ## Punteggi
 
 |         | Performance | Accessibilità | Best practices |

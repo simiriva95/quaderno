@@ -11,6 +11,8 @@ interface Props {
   color: string
   size: number
   replay: boolean
+  /** In modalità testo i tratti si vedono ma non si toccano: la matita è posata. */
+  readOnly?: boolean
   /** La palette vive fuori dalla pagina: le passiamo i comandi da qui. */
   registerApi: (pageIndex: number, api: ReturnType<typeof useDrawingCanvas>) => void
   onActivate: (pageIndex: number) => void
@@ -24,6 +26,7 @@ export function DrawCanvas({
   color,
   size,
   replay,
+  readOnly = false,
   registerApi,
   onActivate,
 }: Props) {
@@ -47,7 +50,10 @@ export function DrawCanvas({
   })
 
   return (
-    <div className="absolute inset-0" style={{ zIndex: 4 }}>
+    <div
+      className={`absolute inset-0${readOnly ? ' pointer-events-none' : ''}`}
+      style={{ zIndex: 4 }}
+    >
       <canvas
         ref={baseRef}
         width={PAGE_W}

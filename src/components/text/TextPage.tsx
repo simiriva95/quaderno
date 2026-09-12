@@ -59,7 +59,7 @@ export function TextPage({
   return (
     <div
       ref={ref}
-      className={`hand-text absolute${drying ? ' ink-drying' : ''}`}
+      className={`hand-text absolute${drying ? ' ink-drying' : ''}${readOnly ? ' pointer-events-none' : ''}`}
       style={{
         left: PAGE_PAD_X,
         top: PAGE_PAD_TOP,
@@ -69,9 +69,9 @@ export function TextPage({
       }}
       contentEditable={!readOnly}
       suppressContentEditableWarning
-      role="textbox"
-      aria-multiline="true"
-      aria-label={`Testo della pagina ${pageIndex + 1}`}
+      role={readOnly ? undefined : 'textbox'}
+      aria-multiline={readOnly ? undefined : 'true'}
+      aria-label={readOnly ? undefined : `Testo della pagina ${pageIndex + 1}`}
       spellCheck={false}
       data-placeholder={pageIndex === 0 ? 'Inizia a scrivere…' : ''}
       onKeyDown={(e) => {
@@ -97,6 +97,7 @@ export function TextPage({
       }}
       onInput={(e) => {
         const el = e.currentTarget
+        pruneEmptyInline(el)
         onInput(el.innerHTML, getCaretOffset(el))
       }}
       onChange={(e) => {
@@ -111,4 +112,17 @@ export function TextPage({
       }}
     />
   )
+}
+
+/** Un evidenziatore o un inchiostro "preso in mano" e poi lasciato lì è uno
+ *  span con dentro solo uno spazio a larghezza zero: sulla carta è una macchia.
+ *  Si toglie appena il cursore se n'è andato altrove. */
+function pruneEmptyInline(root: HTMLElement) {
+  const sel = document.getSelection()
+  const anchor = sel?.anchorNode ?? null
+  for (const el of Array.from(root.querySelectorAll('mark, span[class^="ink-"], u'))) {
+    if ((el.textContent ?? '').replace(/[\s\u200B]/g, '') !== '') continue
+    if (anchor && el.contains(anchor)) continue
+    el.remove()
+  }
 }

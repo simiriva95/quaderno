@@ -1,4 +1,4 @@
-import { Eraser, Heading, ListChecks, Underline } from 'lucide-react'
+import { Heading, ListChecks, RemoveFormatting, Underline } from 'lucide-react'
 import { motion } from 'motion/react'
 import { INK_COLORS, SPRING } from '../../lib/constants'
 import { clearFormatting, TODO_HTML, wrapSelection } from '../../lib/richtext'
@@ -41,7 +41,7 @@ export function InkToolbar({ getEditor, onChanged }: Props) {
     <div
       role="toolbar"
       aria-label="Strumenti di scrittura"
-      className="mx-md flex max-w-[calc(100vw-2rem)] flex-wrap items-center justify-center gap-2xs rounded-lg bg-paper px-sm py-2xs shadow-paper"
+      className="mx-md flex max-w-[calc(100vw-2rem)] flex-nowrap items-center gap-2xs overflow-x-auto rounded-lg bg-paper px-sm py-2xs shadow-paper sm:flex-wrap sm:justify-center sm:overflow-visible"
       // mousedown invece di click: non si perde la selezione nel testo
       onMouseDown={(e) => e.preventDefault()}
     >
@@ -135,7 +135,7 @@ export function InkToolbar({ getEditor, onChanged }: Props) {
           if (editor) run(() => clearFormatting(editor))
         }}
       >
-        <Eraser size={20} strokeWidth={1.75} />
+        <RemoveFormatting size={20} strokeWidth={1.75} />
       </ToolButton>
     </div>
   )

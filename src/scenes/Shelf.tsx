@@ -100,7 +100,7 @@ export default function Shelf() {
         <h1 className="font-hand text-xl text-ink">I miei quaderni</h1>
         <div className="flex items-center gap-sm">
           {notebooks.length > 0 && (
-            <p className="text-2xs text-graphite opacity-60">
+            <p className="text-xs text-graphite">
               {notebooks.length} {notebooks.length === 1 ? 'quaderno' : 'quaderni'}
             </p>
           )}

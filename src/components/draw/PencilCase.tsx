@@ -1,4 +1,4 @@
-import { Eraser, Highlighter, Pen, Pencil, Redo2, Trash2, Undo2 } from 'lucide-react'
+import { Brush, Eraser, Highlighter, Pen, Pencil, Redo2, Trash2, Undo2 } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import { COVER_COLORS, INK_COLORS, SPRING, STROKE_SIZES } from '../../lib/constants'
@@ -8,7 +8,7 @@ import type { DrawTool } from '../../types'
 const TOOLS: { id: DrawTool; label: string; Icon: typeof Pencil }[] = [
   { id: 'pencil', label: 'Matita', Icon: Pencil },
   { id: 'pen', label: 'Penna', Icon: Pen },
-  { id: 'marker', label: 'Pennarello', Icon: Highlighter },
+  { id: 'marker', label: 'Pennarello', Icon: Brush },
   { id: 'highlighter', label: 'Evidenziatore', Icon: Highlighter },
   { id: 'eraser', label: 'Gomma', Icon: Eraser },
 ]
@@ -26,7 +26,8 @@ interface Props {
   canRedo: boolean
 }
 
-/** L'astuccio: pannello laterale su desktop, cassetto dal basso su mobile.
+/** L'astuccio: un vassoio in basso, su tutti gli schermi, nello stesso posto
+ *  del portapenne del testo — così la pagina non si muove cambiando modalità.
  *  Lo strumento scelto si solleva, e il colore attivo sta sulla sua punta. */
 export function PencilCase({ onUndo, onRedo, onClear, canUndo, canRedo }: Props) {
   const { tool, setTool, toolColor, setToolColor, toolSize, setToolSize } = usePrefs()
@@ -38,7 +39,7 @@ export function PencilCase({ onUndo, onRedo, onClear, canUndo, canRedo }: Props)
       aria-label="Astuccio"
       // su mobile è un cassetto che manda a capo: 17 strumenti in fila non
       // stanno in 390px e finirebbero uno sopra l'altro
-      className="flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-center gap-2xs rounded-lg bg-paper px-sm py-xs shadow-lift md:max-w-none md:flex-col md:flex-nowrap md:px-2xs md:py-sm"
+      className="mx-md flex max-w-[calc(100vw-2rem)] flex-nowrap items-center gap-2xs overflow-x-auto rounded-lg bg-paper px-sm py-2xs shadow-paper sm:flex-wrap sm:justify-center sm:overflow-visible"
     >
       {TOOLS.map(({ id, label, Icon }) => (
         <motion.button
@@ -48,16 +49,20 @@ export function PencilCase({ onUndo, onRedo, onClear, canUndo, canRedo }: Props)
           title={label}
           aria-pressed={tool === id}
           onClick={() => setTool(id)}
-          animate={{ y: tool === id ? -6 : 0 }}
+          animate={{ y: tool === id ? -3 : 0 }}
           transition={SPRING}
-          className="relative grid size-11 place-items-center rounded-sm text-graphite transition-colors hover:bg-desk"
+          className={`relative flex h-14 w-[4.2rem] shrink-0 flex-col items-center justify-center gap-px rounded-sm transition-colors hover:bg-desk ${
+            tool === id ? 'text-ink' : 'text-graphite'
+          }`}
         >
-          <Icon size={20} strokeWidth={1.75} className={tool === id ? 'text-ink' : 'opacity-65'} />
+          <Icon size={20} strokeWidth={1.75} />
+          {/* il nome sotto: pennarello ed evidenziatore non si distinguono a icona */}
+          <span className="text-2xs leading-none">{label}</span>
           {tool === id && id !== 'eraser' && (
             <motion.span
               layoutId="tool-tip"
               transition={SPRING}
-              className="absolute bottom-1 size-2 rounded-full"
+              className="absolute right-2 top-1.5 size-2 rounded-full"
               style={{ backgroundColor: `var(--c-${toolColor})` }}
             />
           )}
@@ -66,13 +71,7 @@ export function PencilCase({ onUndo, onRedo, onClear, canUndo, canRedo }: Props)
 
       <Divider />
 
-      {/* su desktop colori e spessori vanno su due colonne: in fila singola
-          l'astuccio sarebbe più alto della pagina */}
-      <div
-        className="flex gap-2xs md:grid md:grid-cols-2 md:gap-0"
-        role="group"
-        aria-label="Colore"
-      >
+      <div className="flex gap-2xs" role="group" aria-label="Colore">
         {SWATCHES.slice(0, 6).map(({ token, label }) => (
           <button
             key={token}
@@ -160,8 +159,5 @@ export function PencilCase({ onUndo, onRedo, onClear, canUndo, canRedo }: Props)
 }
 
 const Divider = () => (
-  <span
-    className="mx-2xs h-6 w-px bg-desk-deep opacity-60 md:mx-0 md:my-2xs md:h-px md:w-6"
-    aria-hidden="true"
-  />
+  <span className="mx-2xs h-6 w-px bg-desk-deep opacity-60" aria-hidden="true" />
 )

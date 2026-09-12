@@ -27,7 +27,7 @@ checkbox nel testo, che scalano con la pagina.
 Bundle: primo paint 58.7 KB gzip; il chunk della mensola 3D (three.js) 236 KB gzip, caricato
 dopo.
 
-Corretto oggi, prima di scrivere il piano: colori del disegno (erano tutti neri: il canvas
+Fascia "subito" del piano completata il 12/09 (voci 1–9, ✅ nel testo). Corretto prima di scrivere il piano: colori del disegno (erano tutti neri: il canvas
 non risolve `var()`), astuccio sotto la pagina sul telefono, evidenziatore su più righe,
 baseline dei titoli sulla seconda riga, home vuota in 3D.
 
@@ -54,35 +54,35 @@ Ordinati per gravità. Per ciascuno: **dove** (passo + profilo), **evidenza**, *
 - Gravità: **alta**.
 - Perché conta: la scena tipica è "schema disegnato in classe di giorno, ripasso a letto di sera". Oggi la sera lo schema sparisce. E un astuccio con sei colori che non colorano rompe la fiducia nell'oggetto.
 
-**A2. Sul telefono il titolo del quaderno è troncato a "Le…" in ogni schermata del quaderno.**
+**A2. Sul telefono il titolo del quaderno è troncato a "Le…" in ogni schermata del quaderno.** ✅ _Corretto: header su due righe sul telefono, con "Pagina X di Y" e lente in seconda riga._
 
 - Dove: `telefono/04` → `telefono/12` (tutti).
 - Evidenza: header = indietro + titolo + lente + ⋯ + T/matita; l'`<input>` del titolo (flex-1) riceve 48 px (report: "Titolo del quaderno — 48×40"). "Letteratura" diventa "Le…".
 - Gravità: **alta**.
 - Perché conta: chi ha 6–9 materie apre e chiude quaderni di continuo; senza titolo leggibile non sai dove sei. In più il titolo è l'unico punto per rinominare (è un input) e troncato non lo si scopre mai.
 
-**A3. Sul desktop la pagina destra della doppia pagina è "morta": si vede ma non si può scrivere né disegnare.**
+**A3. Sul desktop la pagina destra della doppia pagina è "morta": si vede ma non si può scrivere né disegnare.** ✅ _Corretto: la pagina destra si scrive e si disegna, nasce al primo segno; etichetta "Pagine 1–2 di 2"._
 
 - Dove: `quaderno-aperto` e `scrittura` su desktop e tablet (`desktop/04`, `desktop/05`, `tablet/05`), `sfoglia` (`desktop/11`).
 - Evidenza: due pagine a schermo ma "Pagina 1 di 1"; la destra non ha numero. In `Reader.tsx` `TextPage`/`DrawCanvas` si montano solo se `page` esiste, e la pagina destra nasce solo premendo la freccia o quando la sinistra ha contenuto (`canGoNext = … || lastHasContent`). In `desktop/11` "Pagina 3 di 3" con due fogli visibili: stesso fenomeno.
 - Gravità: **alta**.
 - Perché conta: su carta si scrive dove si vuole; la doppia pagina "schema a sinistra, riassunto a destra" è un pattern di studio classico. Cliccare sulla destra e non ottenere il cursore fa pensare che l'app sia rotta. Anche la freccia "→" attiva con "1 di 1" (`desktop/05`) è incoerente.
 
-**A4. Il pulsante "Metti sulla mensola" è sotto la piega su desktop e tablet, e su telefono l'intero form è sotto l'anteprima.**
+**A4. Il pulsante "Metti sulla mensola" è sotto la piega su desktop e tablet, e su telefono l'intero form è sotto l'anteprima.** ✅ _Corretto: pulsante fisso in basso su tutti gli schermi; sul telefono anteprima piccola fissa in alto._
 
 - Dove: `atelier` e `atelier-personalizzato`: `desktop/02`, `desktop/03` (si vede solo un bordo blu a y≈890 su 900), `desktop-sera/02` (idem), `tablet/02` (nemmeno il bordo; anche "Carta" ed "Elastico" fuori), `telefono/02` (il primo schermo è tutta anteprima, "Come lo chiami?" è a fondo schermo).
 - Evidenza: `Atelier.tsx` — griglia `lg:grid-cols-[1fr_420px]` con colonna destra lunga e CTA in fondo; nessun elemento sticky. La colonna sinistra usa 280 px su ~800 disponibili: molto spazio sprecato mentre il CTA sparisce.
 - Gravità: **alta** (è il primo compito del funnel).
 - Perché conta: su un portatile da 13" (1366×768 o 1440×900) la studentessa non vede come confermare. Su telefono deve scorrere tutto un modulo prima di poter perfino dare un nome.
 
-**A5. Passando da testo a disegno la pagina cambia posto e dimensione; sul telefono finisce sotto l'astuccio.** ✅ _Telefono corretto il 12/09: l'astuccio è in colonna sotto la pagina. Restano tablet/desktop (voce 5 del piano)._
+**A5. Passando da testo a disegno la pagina cambia posto e dimensione; sul telefono finisce sotto l'astuccio.** ✅ _Telefono corretto il 12/09: l'astuccio è in colonna sotto la pagina. Restano tablet/desktop (voce 5 del piano)._ ✅ _Corretto su tutti gli schermi: l'astuccio è un vassoio in basso nello stesso slot della barra del testo, altezza fissa. In più testo e tratti convivono sempre (il testo restava nascosto in disegno)._
 
 - Dove: `disegno` vs `scrittura`: `telefono/10` vs `telefono/05`; `tablet/10` vs `tablet/05`; `desktop/10` vs `desktop/05`.
 - Evidenza: su telefono la pagina parte a y≈205 CSS (era 122) e il fondo è coperto dal cassetto dell'astuccio: l'ultimo terzo del foglio non si vede e non si disegna. Su tablet la pagina perde ~25% di larghezza (x 84→244) perché l'astuccio laterale entra nel flex; su desktop si sposta a destra e in basso fin quasi al bordo (y 875/900). L'astuccio è montato solo in `draw` e la barra del testo solo in `text`, quindi il contenitore che `useFitScale` misura cambia.
 - Gravità: **alta** sul telefono, media su tablet/desktop.
 - Perché conta: iPad + Pencil è _il_ caso d'uso di chi viene da GoodNotes, e proprio lì la superficie di disegno si rimpicciolisce. Un quaderno che si sposta quando prendi la matita smentisce il principio "un oggetto, non un'interfaccia".
 
-**A6. Importare un file JSON sostituisce tutti i quaderni senza conferma.**
+**A6. Importare un file JSON sostituisce tutti i quaderni senza conferma.** ✅ _Corretto: "Aggiungi" (default, per id) o "Sostituisci tutto" con conferma._
 
 - Dove: `impostazioni` (`desktop/14`, `telefono/14`, `desktop-sera/14`).
 - Evidenza: `SettingsSheet.importFile` → `replaceAll(imported)` appena scelto il file. L'unico avviso è la nota in 12 px a opacità 0.6 sotto ("L'importazione sostituisce quelli esistenti"), che axe segnala per contrasto.
@@ -91,34 +91,34 @@ Ordinati per gravità. Per ciascuno: **dove** (passo + profilo), **evidenza**, *
 
 ### Media
 
-**M1. Residui gialli di evidenziatore vuoto sulla carta.** ✅ _In parte corretto il 12/09: l'evidenziatore su più righe avvolge nodo per nodo e salta spazi e ZWSP. Resta il `<mark>` su selezione vuota (voce 7)._
+**M1. Residui gialli di evidenziatore vuoto sulla carta.** ✅ _In parte corretto il 12/09: l'evidenziatore su più righe avvolge nodo per nodo e salta spazi e ZWSP. Resta il `<mark>` su selezione vuota (voce 7)._ ✅ _Completato: gli span con solo spazio a larghezza zero si tolgono appena il cursore se ne va._
 
 - Dove: `telefono/05`–`09`, `desktop/05`–`09`, `desktop-sera/05`; enormi in `desktop/08-zoom-quarto.png`.
 - Evidenza: barrette gialle sulla riga sopra "Il Romanticismo" e sotto la checklist. `richtext.wrapSelection` su selezione collassata inserisce `<mark>​</mark>` (zero-width space) "per tenere lo strumento in mano"; la regola `.hand-text mark:empty` non lo cattura perché non è vuoto. Resta nell'HTML salvato.
 - Gravità: media (è un difetto visibile della carta, cioè del prodotto).
 
-**M2. Icone degli strumenti indistinguibili e senza etichetta.**
+**M2. Icone degli strumenti indistinguibili e senza etichetta.** ✅ _Corretto: pennarello con icona propria, nome sotto ogni strumento, cancellino del testo e svuota pagina con icone diverse._
 
 - Dove: `telefono/10`, `desktop/10`, `tablet/10`.
 - Evidenza: `PencilCase.tsx` usa `Highlighter` sia per "Pennarello" sia per "Evidenziatore"; matita e penna sono due tratti sottili quasi uguali. Nessun testo sotto. Nella barra del testo, invece, i tre evidenziatori non hanno stato selezionato (`aria-pressed` assente) e il "cancellino" ha la stessa icona della gomma del disegno e dello "Svuota" del menu ⋯ (`telefono/04`, `/10`, `/12`): tre gomme, tre significati.
 - Gravità: media.
 - Perché conta: chi evidenzia per ripassare deve saper distinguere il pennarello coprente dall'evidenziatore trasparente al primo colpo.
 
-**M3. Sul telefono non c'è alcuna indicazione di pagina.**
+**M3. Sul telefono non c'è alcuna indicazione di pagina.** ✅ _Corretto con l'header a due righe._
 
 - Dove: `telefono/05`, `telefono/11`.
 - Evidenza: "Pagina X di Y" è `hidden sm:block`; il numero a piè pagina è `text-2xs` (12 px) × scala ~0.6 ≈ 7 px a opacità 0.35: illeggibile.
 - Gravità: media.
 - Perché conta: "a che pagina ero" e "quante ne ho" servono per ripassare e per ritrovare.
 
-**M4. Su telefono, mentre si personalizza, l'anteprima non si vede.**
+**M4. Su telefono, mentre si personalizza, l'anteprima non si vede.** ✅ _Corretto: anteprima fissa in alto._
 
 - Dove: `telefono/03-atelier-personalizzato.png`.
 - Evidenza: scelto "Stelline" + lavanda + gatto, in viewport c'è solo il foglio di carta; la copertina è scrollata via. Il feedback dal vivo, che è tutto il senso dell'atelier, sparisce proprio sul dispositivo principale.
 - Gravità: media.
 - Perché conta: per questo pubblico "personalizzare con gusto" è un motivo per aprire l'app; senza vedere il risultato si tira a indovinare.
 
-**M5. Etichette da 12 px sbiadite: contrasto insufficiente in modo sistematico.**
+**M5. Etichette da 12 px sbiadite: contrasto insufficiente in modo sistematico.** ✅ _Corretto: etichette a 14px piene, "Sistema" al posto di "Come il sistema"._
 
 - Dove: `atelier` (axe: 14 nodi `h2` "Come lo chiami?", "Copertina", "Motivo"…), `impostazioni` (5 nodi: legenda "Luce", nota finale), `mensola-piena` (conteggio "9 quaderni"), `torna-mensola` su telefono.
 - Evidenza: `text-2xs` (0.75 rem) con `opacity-60/70` su `--c-graphite`. Il rapporto non trova testi <12 px, ma i 12 px al 60% non passano.
