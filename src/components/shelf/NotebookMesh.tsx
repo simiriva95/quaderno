@@ -216,16 +216,17 @@ export function NotebookMesh({
             Il metallo ha un colore suo: di sera cambia la luce, non l'acciaio
             — con i token gli anelli diventavano neri. Il raggio resta dentro
             la larghezza del dorso, o sulla fila piena gli anelli finivano
-            addosso ai vicini. */}
+            addosso ai vicini, e sono due — come su un raccoglitore vero —
+            sopra e sotto la tasca dell'etichetta. */}
         {binder &&
-          [-0.28, 0, 0.28].map((f) => (
+          [-0.36, 0.36].map((f) => (
             <mesh
               key={f}
               position={[0, height * f, depth / 2 - 0.004]}
               rotation={[Math.PI / 2, 0, 0]}
             >
-              <torusGeometry args={[width * 0.42, 0.011, 8, 24]} />
-              <meshToonMaterial gradientMap={toon} color="#B4B9C4" />
+              <torusGeometry args={[width * 0.42, 0.009, 8, 24]} />
+              <meshToonMaterial gradientMap={toon} color="#8A8F9B" />
             </mesh>
           ))}
       </group>

@@ -130,7 +130,7 @@ export function NotebookPreview({ cover, title, pulseKey, width = 260, kind }: P
 
         {/* gli anelli, attorno al dorso */}
         {binder &&
-          [0.2, 0.5, 0.8].map((f) => (
+          [0.16, 0.84].map((f) => (
             <span
               key={f}
               aria-hidden="true"
@@ -140,7 +140,7 @@ export function NotebookPreview({ cover, title, pulseKey, width = 260, kind }: P
                 top: height * f - spine * 0.4,
                 width: spine * 2.1,
                 height: spine * 0.8,
-                backgroundColor: '#C7CAD1',
+                backgroundColor: '#8A8F9B',
                 boxShadow: 'inset 0 -1px 2px rgb(var(--sh-tint) / .35)',
               }}
             />
