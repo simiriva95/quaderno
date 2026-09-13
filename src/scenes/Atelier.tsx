@@ -2,14 +2,14 @@ import { ArrowLeft, Check } from 'lucide-react'
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import { useMediaQuery } from '../hooks/useMediaQuery'
-import { useNavigate } from '../lib/router'
+import { notebookPath, useNavigate } from '../lib/router'
 import { NotebookPreview } from '../components/atelier/NotebookPreview'
 import { Sticker } from '../components/atelier/Stickers'
 import { stickerLabel } from '../lib/stickers'
 import { PaperPage } from '../components/notebook/PaperPage'
 import { COVER_COLORS, COVER_LABELS, SPRING, STICKERS } from '../lib/constants'
 import { defaultCover, useNotebooks } from '../store/notebooks'
-import type { CoverColor, CoverPattern, PaperKind } from '../types'
+import type { CoverColor, CoverPattern, NotebookKind, PaperKind } from '../types'
 
 const PATTERNS: { id: CoverPattern; label: string }[] = [
   { id: 'plain', label: 'Tinta unita' },
@@ -18,6 +18,11 @@ const PATTERNS: { id: CoverPattern; label: string }[] = [
   { id: 'gingham', label: 'Quadretti vichy' },
   { id: 'stars', label: 'Stelline' },
   { id: 'clouds', label: 'Nuvolette' },
+]
+
+const KINDS: { id: NotebookKind; label: string; hint: string }[] = [
+  { id: 'paper', label: 'A mano', hint: 'Carta a righe, matita, pagine che si sfogliano.' },
+  { id: 'web', label: 'Web dev', hint: 'Foglio unico che scorre: codice, immagini, diagrammi.' },
 ]
 
 const PAPERS: { id: PaperKind; label: string }[] = [
@@ -33,6 +38,7 @@ export default function Atelier() {
   const [title, setTitle] = useState('')
   const [cover, setCover] = useState(defaultCover())
   const [paper, setPaper] = useState<PaperKind>('lined')
+  const [kind, setKind] = useState<NotebookKind>('paper')
   // sul telefono l'anteprima è piccola e fissa in alto; su schermo largo è la scrivania
   const wide = useMediaQuery('(min-width: 1024px)')
 
@@ -61,11 +67,12 @@ export default function Atelier() {
           <NotebookPreview
             cover={cover}
             title={title}
-            pulseKey={`${cover.color}-${cover.pattern}-${cover.spineColor}`}
+            pulseKey={`${cover.color}-${cover.pattern}-${cover.spineColor}-${kind}`}
             width={wide ? 300 : 110}
+            kind={kind}
           />
           <div
-            className="hidden overflow-hidden rounded-md shadow-paper lg:block"
+            className={`hidden overflow-hidden rounded-md shadow-paper ${kind === 'paper' ? 'lg:block' : ''}`}
             style={{ width: 180, height: 252 }}
             role="img"
             aria-label={`Anteprima della carta: ${PAPERS.find((p) => p.id === paper)?.label}`}
@@ -77,6 +84,15 @@ export default function Atelier() {
         </div>
 
         <div className="flex flex-col gap-lg">
+          <Field label="Che quaderno è?">
+            <div className="flex flex-wrap gap-2xs">
+              {KINDS.map(({ id, label }) => (
+                <Chip key={id} active={kind === id} onClick={() => setKind(id)} label={label} />
+              ))}
+            </div>
+            <p className="text-xs text-graphite">{KINDS.find((k) => k.id === kind)?.hint}</p>
+          </Field>
+
           <Field label="Come lo chiami?">
             <input
               value={title}
@@ -146,23 +162,28 @@ export default function Atelier() {
             />
           </Field>
 
-          <Field label="Carta">
-            <div className="flex flex-wrap gap-2xs">
-              {PAPERS.map(({ id, label }) => (
-                <Chip key={id} active={paper === id} onClick={() => setPaper(id)} label={label} />
-              ))}
-            </div>
-          </Field>
+          {kind === 'paper' && (
+            <Field label="Carta">
+              <div className="flex flex-wrap gap-2xs">
+                {PAPERS.map(({ id, label }) => (
+                  <Chip key={id} active={paper === id} onClick={() => setPaper(id)} label={label} />
+                ))}
+              </div>
+            </Field>
+          )}
 
-          <label className="flex h-12 cursor-pointer items-center gap-sm rounded-md bg-paper px-md text-xs shadow-paper">
-            <input
-              type="checkbox"
-              checked={cover.elastic}
-              onChange={(e) => patch({ elastic: e.target.checked })}
-              className="size-5 accent-[var(--c-ink)]"
-            />
-            Elastico di chiusura
-          </label>
+          {/* Un raccoglitore ad anelli non ha l'elastico: ha gli anelli. */}
+          {kind === 'paper' && (
+            <label className="flex h-12 cursor-pointer items-center gap-sm rounded-md bg-paper px-md text-xs shadow-paper">
+              <input
+                type="checkbox"
+                checked={cover.elastic}
+                onChange={(e) => patch({ elastic: e.target.checked })}
+                className="size-5 accent-[var(--c-ink)]"
+              />
+              Elastico di chiusura
+            </label>
+          )}
 
           {/* il pulsante resta a portata: su portatile e tablet finiva sotto la piega */}
           <div className="sticky bottom-0 z-10 -mx-md bg-desk/90 px-md py-sm backdrop-blur-sm">
@@ -175,8 +196,9 @@ export default function Atelier() {
                   title: title.trim() || 'Senza titolo',
                   cover,
                   paper,
+                  kind,
                 })
-                navigate(`/q/${id}`)
+                navigate(notebookPath({ id, kind }))
               }}
               className="flex h-14 w-full items-center justify-center gap-xs rounded-md bg-ink px-lg text-sm font-semibold text-paper shadow-lift"
             >

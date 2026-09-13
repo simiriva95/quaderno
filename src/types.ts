@@ -1,5 +1,10 @@
 export type PaperKind = 'lined' | 'grid' | 'blank'
 
+/** Due oggetti diversi, non due carte: il quaderno a mano si sfoglia e impagina
+ *  il testo, il raccoglitore scorre e tiene codice, immagini e diagrammi.
+ *  Il campo è opzionale: i quaderni già sulla mensola sono 'paper'. */
+export type NotebookKind = 'paper' | 'web'
+
 export type CoverPattern = 'plain' | 'dots' | 'stripes' | 'gingham' | 'stars' | 'clouds'
 
 export type CoverColor =
@@ -63,6 +68,8 @@ export interface Notebook {
   createdAt: number
   updatedAt: number
   cover: Cover
+  /** assente ⇒ 'paper' */
+  kind?: NotebookKind
   paper: PaperKind
   lastOpenedPageIndex: number
   pages: Page[]
@@ -71,4 +78,7 @@ export interface Notebook {
 export interface NotebooksSnapshot {
   version: number
   notebooks: Notebook[]
+  /** id → data URL. Le immagini vivono in IndexedDB: nell'export viaggiano qui,
+   *  o il backup perderebbe gli screenshot. Assente nei file di prima. */
+  blobs?: Record<string, string>
 }

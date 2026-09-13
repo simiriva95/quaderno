@@ -20,11 +20,12 @@ interface Props {
   title: string
   onTitleChange: (t: string) => void
   pageLabel: string
-  mode: Mode
-  onModeChange: (m: Mode) => void
+  /** assenti sul raccoglitore: non ha modalità disegno né zoom a passi */
+  mode?: Mode
+  onModeChange?: (m: Mode) => void
   onBack: () => void
   saveState: SaveState
-  zoom: { canIn: boolean; canOut: boolean; onIn: () => void; onOut: () => void; label: string }
+  zoom?: { canIn: boolean; canOut: boolean; onIn: () => void; onOut: () => void; label: string }
   /** le azioni che cancellano, dietro un menu: non si premono per sbaglio */
   onClearPages: () => void
   clearLabel: string
@@ -83,38 +84,40 @@ export function NotebookHeader({
       <p className="hidden text-xs text-graphite sm:block">{pageLabel}</p>
 
       {/* La lente: pagina intera, poi un quarto. Le frecce scorrono le zone. */}
-      <div
-        role="group"
-        aria-label="Zoom"
-        className="hidden items-center rounded-md bg-paper p-2xs shadow-paper sm:flex"
-      >
-        <button
-          type="button"
-          onClick={zoom.onOut}
-          disabled={!zoom.canOut}
-          aria-label="Riduci zoom"
-          title="Riduci zoom (−)"
-          className="grid size-11 place-items-center rounded-sm text-graphite transition-colors hover:bg-desk disabled:opacity-30"
+      {zoom && (
+        <div
+          role="group"
+          aria-label="Zoom"
+          className="hidden items-center rounded-md bg-paper p-2xs shadow-paper sm:flex"
         >
-          <ZoomOut size={19} strokeWidth={1.75} />
-        </button>
-        <span
-          className="hidden min-w-[3.2rem] text-center text-2xs text-graphite md:block"
-          aria-live="polite"
-        >
-          {zoom.label}
-        </span>
-        <button
-          type="button"
-          onClick={zoom.onIn}
-          disabled={!zoom.canIn}
-          aria-label="Aumenta zoom"
-          title="Aumenta zoom (+)"
-          className="grid size-11 place-items-center rounded-sm text-graphite transition-colors hover:bg-desk disabled:opacity-30"
-        >
-          <ZoomIn size={19} strokeWidth={1.75} />
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={zoom.onOut}
+            disabled={!zoom.canOut}
+            aria-label="Riduci zoom"
+            title="Riduci zoom (−)"
+            className="grid size-11 place-items-center rounded-sm text-graphite transition-colors hover:bg-desk disabled:opacity-30"
+          >
+            <ZoomOut size={19} strokeWidth={1.75} />
+          </button>
+          <span
+            className="hidden min-w-[3.2rem] text-center text-2xs text-graphite md:block"
+            aria-live="polite"
+          >
+            {zoom.label}
+          </span>
+          <button
+            type="button"
+            onClick={zoom.onIn}
+            disabled={!zoom.canIn}
+            aria-label="Aumenta zoom"
+            title="Aumenta zoom (+)"
+            className="grid size-11 place-items-center rounded-sm text-graphite transition-colors hover:bg-desk disabled:opacity-30"
+          >
+            <ZoomIn size={19} strokeWidth={1.75} />
+          </button>
+        </div>
+      )}
 
       <div ref={menuRef} className="relative">
         <button
@@ -157,35 +160,41 @@ export function NotebookHeader({
         )}
       </div>
 
-      <ModeGroup
-        mode={mode}
-        onModeChange={onModeChange}
-        layoutId="mode-pill"
-        className="hidden sm:flex"
-      />
+      {mode && onModeChange && (
+        <ModeGroup
+          mode={mode}
+          onModeChange={onModeChange}
+          layoutId="mode-pill"
+          className="hidden sm:flex"
+        />
+      )}
 
       {/* Sul telefono la seconda riga: lente, "Pagina 2 di 5", T/matita.
           Così il titolo in prima riga resta leggibile per intero. */}
       <div className="flex basis-full items-center justify-between sm:hidden">
-        <button
-          type="button"
-          onClick={zoom.canOut ? zoom.onOut : zoom.onIn}
-          aria-label={zoom.canOut ? 'Riduci zoom' : 'Aumenta zoom'}
-          className="grid size-11 place-items-center rounded-md bg-paper text-graphite shadow-paper"
-        >
-          {zoom.canOut ? (
-            <ZoomOut size={19} strokeWidth={1.75} />
-          ) : (
-            <ZoomIn size={19} strokeWidth={1.75} />
-          )}
-        </button>
+        {zoom && (
+          <button
+            type="button"
+            onClick={zoom.canOut ? zoom.onOut : zoom.onIn}
+            aria-label={zoom.canOut ? 'Riduci zoom' : 'Aumenta zoom'}
+            className="grid size-11 place-items-center rounded-md bg-paper text-graphite shadow-paper"
+          >
+            {zoom.canOut ? (
+              <ZoomOut size={19} strokeWidth={1.75} />
+            ) : (
+              <ZoomIn size={19} strokeWidth={1.75} />
+            )}
+          </button>
+        )}
         <p className="text-xs text-graphite">{pageLabel}</p>
-        <ModeGroup
-          mode={mode}
-          onModeChange={onModeChange}
-          layoutId="mode-pill-m"
-          className="flex"
-        />
+        {mode && onModeChange && (
+          <ModeGroup
+            mode={mode}
+            onModeChange={onModeChange}
+            layoutId="mode-pill-m"
+            className="flex"
+          />
+        )}
       </div>
     </header>
   )

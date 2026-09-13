@@ -169,5 +169,166 @@ for (const theme of ['light', 'dark']) {
   await p.screenshot({ path: `${OUT}/telefono-disegno.png` })
   await p.close()
 }
+// il raccoglitore: foglio unico, diagramma, codice
+{
+  const DOC = {
+    type: 'doc',
+    content: [
+      {
+        type: 'heading',
+        attrs: {
+          level: 2,
+        },
+        content: [
+          {
+            type: 'text',
+            text: 'RAG, in due minuti',
+          },
+        ],
+      },
+      {
+        type: 'paragraph',
+        content: [
+          {
+            type: 'text',
+            text: 'Il retriever cerca i ',
+          },
+          {
+            type: 'text',
+            marks: [
+              {
+                type: 'code',
+              },
+            ],
+            text: 'k',
+          },
+          {
+            type: 'text',
+            text: ' pezzi più vicini nello spazio degli embedding e li mette nel prompt. Più contesto non è meglio: conta la densità.',
+          },
+        ],
+      },
+      {
+        type: 'codeBlock',
+        attrs: {
+          language: 'mermaid',
+        },
+        content: [
+          {
+            type: 'text',
+            text: 'flowchart LR\n  Q[Domanda] --> E[Embedding]\n  E --> V[(Vector DB)]\n  V --> C[Contesto]\n  C --> L[LLM] --> R[Risposta]',
+          },
+        ],
+      },
+      {
+        type: 'codeBlock',
+        attrs: {
+          language: 'python',
+        },
+        content: [
+          {
+            type: 'text',
+            text: 'hits = index.query(embed(domanda), top_k=4)\ncontesto = "\\n\\n".join(h.text for h in hits)',
+          },
+        ],
+      },
+      {
+        type: 'taskList',
+        content: [
+          {
+            type: 'taskItem',
+            attrs: {
+              checked: true,
+            },
+            content: [
+              {
+                type: 'paragraph',
+                content: [
+                  {
+                    type: 'text',
+                    text: 'provare chunk da 400 e da 800 token',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: 'taskItem',
+            attrs: {
+              checked: false,
+            },
+            content: [
+              {
+                type: 'paragraph',
+                content: [
+                  {
+                    type: 'text',
+                    text: 'misurare il recall con le domande della lezione 12',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  }
+  const RACCOGLITORE = {
+    id: 'rac',
+    title: 'AI Engineering',
+    createdAt: 1,
+    updatedAt: 1,
+    kind: 'web',
+    cover: {
+      color: 'cielo',
+      pattern: 'plain',
+      labelText: 'AI Engineering',
+      spineColor: 'lino',
+      elastic: false,
+    },
+    paper: 'blank',
+    lastOpenedPageIndex: 0,
+    pages: [{ id: 'd', text: JSON.stringify(DOC), strokes: [], createdAt: 1 }],
+  }
+  for (const [theme, size, name] of [
+    ['light', desktop, 'raccoglitore'],
+    ['dark', phone, 'telefono-raccoglitore'],
+  ]) {
+    const p = await browser.newPage(size)
+    await p.goto(base + '/#/')
+    await p.evaluate(
+      ([nb, t]) => {
+        localStorage.setItem(
+          'quaderno:v1',
+          JSON.stringify({ state: { notebooks: [nb] }, version: 2 }),
+        )
+        localStorage.setItem(
+          'quaderno:prefs:v1',
+          JSON.stringify({
+            state: {
+              theme: t,
+              sounds: false,
+              tool: 'pencil',
+              toolColor: 'graphite',
+              toolSize: 1,
+              ink: 'ink',
+              textSize: 'M',
+            },
+            version: 1,
+          }),
+        )
+      },
+      [RACCOGLITORE, theme],
+    )
+    // il negozio si idrata al primo caricamento: scritto lo storage, si ricarica
+    await p.goto(base + '/#/w/rac')
+    await p.reload()
+    await p.waitForSelector('.mermaid-figure svg', { timeout: 20000 })
+    await p.waitForTimeout(600)
+    await p.screenshot({ path: `${OUT}/${name}.png` })
+    await p.close()
+  }
+}
+
 await browser.close()
 console.log('✓ screenshot in', OUT)

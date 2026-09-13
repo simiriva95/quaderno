@@ -183,10 +183,23 @@ function roundRect(
   ctx.roundRect(x, y, w, h, r)
 }
 
-function fitText(ctx: CanvasRenderingContext2D, text: string, max: number, start: number): number {
+/** Il raccoglitore ha l'etichetta stampata, non scritta a mano: stesso posto,
+ *  altro carattere. È il segno che si legge da lontano sulla mensola. */
+const labelFont = (size: number, printed: boolean): string =>
+  printed
+    ? `700 ${size}px 'Nunito Variable', system-ui, sans-serif`
+    : `600 ${size}px 'Caveat Variable', cursive`
+
+function fitText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  max: number,
+  start: number,
+  printed = false,
+): number {
   let size = start
   while (size > 10) {
-    ctx.font = `600 ${size}px 'Caveat Variable', cursive`
+    ctx.font = labelFont(size, printed)
     if (ctx.measureText(text).width <= max) break
     size -= 2
   }
@@ -199,6 +212,7 @@ export function paintCoverFace(
   title: string,
   w: number,
   h: number,
+  printed = false,
 ): void {
   paintCover(ctx, cover, w, h)
 
@@ -211,19 +225,20 @@ export function paintCoverFace(
   roundRect(ctx, labelX, labelY, labelW, labelH, 6)
   ctx.fill()
   ctx.strokeStyle = cssVar('--c-graphite')
-  ctx.globalAlpha = 0.28
-  ctx.setLineDash([6, 5])
+  // cucita sul quaderno a mano, in una tasca stampata sul raccoglitore
+  ctx.globalAlpha = printed ? 0.4 : 0.28
+  if (!printed) ctx.setLineDash([6, 5])
   ctx.lineWidth = 2
   ctx.stroke()
   ctx.setLineDash([])
   ctx.globalAlpha = 1
 
   const text = (title || cover.labelText || 'Senza titolo').slice(0, 28)
-  const size = fitText(ctx, text, labelW - 24, labelH * 0.62)
+  const size = fitText(ctx, text, labelW - 24, labelH * 0.62, printed)
   ctx.fillStyle = cssVar('--c-ink')
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.font = `600 ${size}px 'Caveat Variable', cursive`
+  ctx.font = labelFont(size, printed)
   ctx.fillText(text, w / 2, labelY + labelH / 2)
 }
 
@@ -254,6 +269,7 @@ export function paintSpine(
   title: string,
   w: number,
   h: number,
+  printed = false,
 ): void {
   ctx.clearRect(0, 0, w, h)
   ctx.fillStyle = coverColor(cover.spineColor)
@@ -265,8 +281,8 @@ export function paintSpine(
   ctx.save()
   ctx.translate(w / 2, h * 0.9)
   ctx.rotate(-Math.PI / 2)
-  const size = fitText(ctx, text, h * 0.74, w * 0.5)
-  ctx.font = `600 ${size}px 'Caveat Variable', cursive`
+  const size = fitText(ctx, text, h * 0.74, w * 0.5, printed)
+  ctx.font = labelFont(size, printed)
   ctx.fillStyle = cssVar('--c-ink')
   ctx.textAlign = 'left'
   ctx.textBaseline = 'middle'

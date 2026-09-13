@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react'
 import { useCoverTexture } from '../../hooks/useCoverTexture'
 import { SPRING, SPRING_SOFT } from '../../lib/constants'
-import type { Cover } from '../../types'
+import type { Cover, NotebookKind } from '../../types'
 import { Sticker } from './Stickers'
 import { stickerTint } from '../../lib/stickers'
 
@@ -11,14 +11,17 @@ interface Props {
   /** Cresce ogni volta che cambia il colore: fa "respirare" la copertina. */
   pulseKey: string
   width?: number
+  /** Il raccoglitore: etichetta stampata, anelli sul dorso, niente elastico. */
+  kind?: NotebookKind
 }
 
 /** Pseudo-3D in CSS. A questa scala è indistinguibile da una scena Three e non
  *  lega la schermata di creazione al chunk di three.js. */
-export function NotebookPreview({ cover, title, pulseKey, width = 260 }: Props) {
+export function NotebookPreview({ cover, title, pulseKey, width = 260, kind }: Props) {
   const texture = useCoverTexture(cover.color, cover.pattern)
+  const binder = kind === 'web'
   const height = width * 1.38
-  const spine = width * 0.07
+  const spine = width * (binder ? 0.085 : 0.07)
 
   return (
     <motion.div
@@ -87,10 +90,14 @@ export function NotebookPreview({ cover, title, pulseKey, width = 260 }: Props) 
               width: width * 0.66,
               minHeight: height * 0.16,
               boxShadow: 'var(--sh-paper)',
-              border: '1px dashed color-mix(in oklab, var(--c-graphite) 28%, transparent)',
+              border: binder
+                ? '1px solid color-mix(in oklab, var(--c-graphite) 38%, transparent)'
+                : '1px dashed color-mix(in oklab, var(--c-graphite) 28%, transparent)',
             }}
           >
-            <span className="font-hand text-base leading-tight text-ink">
+            <span
+              className={`text-base leading-tight text-ink ${binder ? 'font-semibold' : 'font-hand'}`}
+            >
               {title || cover.labelText || 'Senza titolo'}
             </span>
           </div>
@@ -121,9 +128,27 @@ export function NotebookPreview({ cover, title, pulseKey, width = 260 }: Props) 
           </AnimatePresence>
         </div>
 
+        {/* gli anelli, attorno al dorso */}
+        {binder &&
+          [0.2, 0.5, 0.8].map((f) => (
+            <span
+              key={f}
+              aria-hidden="true"
+              className="absolute rounded-full"
+              style={{
+                left: -spine * 0.3,
+                top: height * f - spine * 0.4,
+                width: spine * 2.1,
+                height: spine * 0.8,
+                backgroundColor: '#C7CAD1',
+                boxShadow: 'inset 0 -1px 2px rgb(var(--sh-tint) / .35)',
+              }}
+            />
+          ))}
+
         {/* elastico */}
         <AnimatePresence>
-          {cover.elastic && (
+          {cover.elastic && !binder && (
             <motion.div
               className="absolute"
               style={{

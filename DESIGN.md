@@ -416,3 +416,87 @@ conferma. Prima rimpiazzava tutto al volo.
 Misurati su `dist/` servito con gzip (come fa Vercel). Con `vite preview`, che
 non comprime, la performance mobile scende a ~81: non è la app, è il server di
 anteprima.
+
+## M8 — Il raccoglitore
+
+**Un secondo oggetto, non una terza carta.** Studiare AI engineering vuol dire
+incollare screenshot, tenere blocchi di codice e disegnare schemi di RAG. Nessuna
+di queste cose entra nel quaderno a mano, e non per gusto: `lib/paginate.ts`
+taglia al primo carattere che sfora, e un'immagine alta novecento pixel non ha un
+carattere dove tagliare; `--rule-step: 32px` è insieme passo delle righe,
+`line-height` e griglia, e il monospaziato non ci vive dentro; e soprattutto
+`persist` riserializza **l'intero** array dei quaderni a ogni tasto, quindi uno
+screenshot in base64 sarebbe un `JSON.stringify` da megabyte a ogni battuta. Il
+raccoglitore è quindi un `kind` sul quaderno, una scena sua, e un foglio che
+scorre. Sulla mensola si riconosce da tre anelli sul dorso, dall'etichetta
+stampata invece che scritta a mano, e dal fatto che è un filo più grosso — lo
+scarto resta sotto il `GAP`, o i vicini si toccherebbero.
+
+**Il campo `kind` è opzionale.** Assente vuol dire `'paper'`. Così i quaderni già
+sulla mensola restano validi senza una migrazione che li riscriva, e i test e2e
+che costruiscono il quaderno a mano non cambiano di una riga.
+
+**La rotta è `#/w/`, non `#/q/`.** Non è cosmetica. `scripts/debugger.mjs` attiva
+i suoi invarianti solo dentro `/#\/q\//`, e due di quelli sono la negazione
+letterale di questa pagina: «mai una scrollbar dentro la carta» (la radice di
+ProseMirror _è_ un contenteditable che scorre) e «testo a schermo uguale allo
+storage» (contro un documento JSON non vuol dire niente). Con un prefisso diverso
+il debugger li salta da solo, mentre il suo controllo sulla console resta attivo
+ovunque.
+
+**Le immagini stanno in IndexedDB, il documento le cita.** Nel testo salvato
+l'immagine è `qimg:<id>`: un `blob:` URL muore al reload, un data URL riporterebbe
+i megabyte in `localStorage`. La conversione avviene solo ai due bordi della
+persistenza — `hydrate` all'apertura, `dehydrate` al salvataggio — così l'editor
+lavora con URL veri e non sa niente del magazzino. Gli screenshot passano da
+`createImageBitmap` + `OffscreenCanvas` e scendono a webp: due megabyte diventano
+centocinquanta kilobyte, senza una dipendenza.
+
+**I blob orfani se ne vanno con un mark & sweep, non con quattro hook.** Quaderno
+eliminato, foglio svuotato, import che sostituisce tutto, annulla: agganciare ogni
+percorso vuol dire dimenticarne uno. Una sola raccolta a `requestIdleCallback`,
+con gli id trovati da una regex sulle stringhe salvate, copre anche i percorsi non
+ancora scritti.
+
+**Il documento si salva in JSON, non in HTML.** L'HTML perde proprio le cose per
+cui esiste questo quaderno: il linguaggio del blocco di codice, la larghezza
+dell'immagine, lo stato delle caselle, le colonne della tabella. E all'import
+`Node.fromJSON` rifiuta qualunque nodo fuori schema — validazione strutturale
+gratis, contro una allowlist da mantenere a mano. Restano gli attributi, che sono
+stringhe libere: `src` e `href` si ripuliscono con `scrub()` in `lib/docimages.ts`.
+Fatto senza schema apposta: la validazione vera vive nel chunk dell'editor, e
+tirarla sul percorso di import porterebbe centosessantacinque kilobyte nel bundle
+iniziale.
+
+**Il salvataggio ha un debounce di mezzo secondo.** Il quaderno di carta scrive a
+ogni tasto perché la pagina pesa poco; un documento web è 50–200 KB di JSON, e
+`persist` riscrive tutto. Si sciacqua al blur e su `beforeunload`, o l'ultimo mezzo
+secondo di scrittura si perderebbe chiudendo la scheda.
+
+**Mermaid arriva solo se serve.** Pesa più di tre volte il primo paint. Un solo
+file lo nomina (`MermaidPreview.tsx`), e lo importa quando un diagramma entra
+davvero in vista: una pagina senza diagrammi non scarica niente. `securityLevel:
+'strict'` — le direttive `click` sanno eseguire `javascript:` — e nessun array
+`secure` nostro, o un `%%{init}%%` dentro il diagramma potrebbe riaprire proprio
+quella impostazione. Si chiama `parse()` prima di `render()`: un diagramma
+illeggibile dentro `render` inietta un SVG d'errore in fondo al documento, e
+l'errore deve restare dentro il blocco.
+
+**I colori del codice sono token, non un tema di highlight.js.** I temi di
+highlight.js sono esadecimali fissi: di sera si spaccano. Quattordici righe che
+mappano `.hljs-keyword` su `--c-ink-violet`, `.hljs-string` su `--c-ink-green` e
+via così, e il tema scuro non costa niente. Stessa logica al contrario per
+mermaid: i token sono in OKLCH e la libreria colori di mermaid non sa leggerli,
+quindi si usa il suo tema `neutral`/`dark` letto da `data-theme`.
+
+**Il diagramma prende la larghezza del foglio.** Mermaid disegna alla dimensione
+naturale: dentro un contenitore che si stringe sul contenuto, un flowchart di
+quattro nodi diventava un francobollo.
+
+**Il testo poggia su un foglio.** Il resto dell'app è fatto di oggetti che stanno
+da qualche parte; il documento non poteva essere l'unico a galleggiare sulla
+scrivania.
+
+**La checkbox delle cose da fare ha un'etichetta.** Il `TaskItem` di serie è un
+`input` nudo dentro una `label` vuota: è la stessa violazione axe già corretta una
+volta su `TODO_HTML`, e sarebbe rientrata dalla finestra.

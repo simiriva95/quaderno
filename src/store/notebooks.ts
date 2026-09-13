@@ -1,10 +1,10 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { Cover, Notebook, Page, PaperKind, Stroke } from '../types'
+import type { Cover, Notebook, NotebookKind, Page, PaperKind, Stroke } from '../types'
 import { newId } from '../lib/id'
 
 const STORAGE_KEY = 'quaderno:v1'
-const SCHEMA_VERSION = 1
+const SCHEMA_VERSION = 2
 
 export const emptyPage = (): Page => ({
   id: newId(),
@@ -25,7 +25,12 @@ interface NotebooksStore {
   notebooks: Notebook[]
   /** Alzato dal wrapper di storage quando localStorage rifiuta la scrittura. */
   quotaExceeded: boolean
-  createNotebook: (draft: { title: string; cover: Cover; paper: PaperKind }) => string
+  createNotebook: (draft: {
+    title: string
+    cover: Cover
+    paper: PaperKind
+    kind?: NotebookKind
+  }) => string
   removeNotebook: (id: string) => void
   renameNotebook: (id: string, title: string) => void
   setPageText: (notebookId: string, pageIndex: number, text: string) => void
@@ -80,7 +85,7 @@ export const useNotebooks = create<NotebooksStore>()(
       notebooks: [],
       quotaExceeded: false,
 
-      createNotebook: ({ title, cover, paper }) => {
+      createNotebook: ({ title, cover, paper, kind }) => {
         const id = newId()
         const now = Date.now()
         set({
@@ -92,6 +97,7 @@ export const useNotebooks = create<NotebooksStore>()(
               createdAt: now,
               updatedAt: now,
               cover: { ...cover, labelText: cover.labelText || title },
+              kind,
               paper,
               lastOpenedPageIndex: 0,
               pages: [emptyPage()],
@@ -165,6 +171,8 @@ export const useNotebooks = create<NotebooksStore>()(
       // invece di buttare i quaderni di chi aggiorna.
       migrate: (persisted, version) => {
         if (version < 1) return { notebooks: [] }
+        // v1 → v2: `kind` è opzionale e assente vuol dire 'paper'. I quaderni
+        // già sulla mensola sono quindi già validi: non si tocca niente.
         return persisted as { notebooks: Notebook[] }
       },
     },

@@ -1,0 +1,217 @@
+/** ── Il foglio del raccoglitore ────────────────────────────────────────────
+ *  Non è carta a righe: `--rule-step` qui non c'entra. Il testo è Nunito a
+ *  interlinea normale, il codice è monospaziato di sistema (nessun terzo
+ *  webfont), e i colori vengono tutti dai token — così la sera arriva gratis.
+ */
+
+.web-doc {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--c-ink);
+}
+
+.web-doc .tiptap {
+  outline: none;
+  min-height: 60dvh;
+}
+
+.web-doc > .tiptap > * + * {
+  margin-top: 0.9em;
+}
+
+.web-doc h1,
+.web-doc h2,
+.web-doc h3 {
+  font-weight: 700;
+  line-height: 1.25;
+  margin-top: 1.6em;
+}
+
+.web-doc h1 {
+  font-size: 1.75rem;
+}
+.web-doc h2 {
+  font-size: 1.35rem;
+}
+.web-doc h3 {
+  font-size: 1.1rem;
+}
+
+.web-doc a {
+  color: var(--c-ink);
+  text-decoration-color: color-mix(in oklab, var(--c-ink) 45%, transparent);
+  text-underline-offset: 2px;
+}
+
+.web-doc blockquote {
+  border-inline-start: 3px solid color-mix(in oklab, var(--c-graphite) 35%, transparent);
+  padding-inline-start: 1em;
+  color: var(--c-graphite);
+}
+
+.web-doc ul,
+.web-doc ol {
+  padding-inline-start: 1.4em;
+}
+
+.web-doc ul[data-type='taskList'] {
+  list-style: none;
+  padding-inline-start: 0;
+}
+
+.web-doc ul[data-type='taskList'] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55em;
+}
+
+.web-doc ul[data-type='taskList'] input[type='checkbox'] {
+  margin-top: 0.35em;
+  width: 1.15em;
+  height: 1.15em;
+  accent-color: var(--c-ink);
+}
+
+.web-doc img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: var(--sh-paper);
+}
+
+.web-doc img.ProseMirror-selectednode {
+  outline: 2px solid var(--c-ink);
+  outline-offset: 2px;
+}
+
+/* Il segnaposto del primo paragrafo vuoto. */
+.web-doc p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--c-graphite);
+  opacity: 0.55;
+  float: inline-start;
+  height: 0;
+  pointer-events: none;
+}
+
+/* ── Codice ─────────────────────────────────────────────────────────────── */
+
+.web-doc code,
+.web-doc pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+}
+
+/* Il `code` dentro il `pre` eredita già la riduzione: applicata due volte il
+   codice scendeva sotto i 12px, e l'audit lo conta come testo troppo piccolo. */
+.web-doc pre code {
+  font-size: 1em;
+}
+
+.web-doc :not(pre) > code {
+  background: color-mix(in oklab, var(--c-graphite) 12%, transparent);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+
+.web-doc pre {
+  background: color-mix(in oklab, var(--c-graphite) 10%, var(--c-paper));
+  border: 1px solid color-mix(in oklab, var(--c-graphite) 18%, transparent);
+  border-radius: 10px;
+  padding: 0.85em 1em;
+  overflow-x: auto;
+  line-height: 1.55;
+}
+
+.web-doc pre code {
+  background: none;
+  padding: 0;
+}
+
+/* I temi di highlight.js sono esadecimali fissi: di sera si spaccano. Le
+   classi si mappano sui token, e il tema scuro non costa niente. */
+.web-doc .hljs-keyword,
+.web-doc .hljs-selector-tag,
+.web-doc .hljs-built_in {
+  color: var(--c-ink-violet);
+}
+.web-doc .hljs-string,
+.web-doc .hljs-regexp,
+.web-doc .hljs-addition {
+  color: var(--c-ink-green);
+}
+.web-doc .hljs-number,
+.web-doc .hljs-literal,
+.web-doc .hljs-deletion {
+  color: var(--c-ink-red);
+}
+/* Il commento è il token più tenue, ma resta un testo da leggere: sbiadirlo
+   con la trasparenza lo portava sotto il contrasto AA. Si smorza mescolando
+   con la carta, non con il nulla. */
+.web-doc .hljs-comment,
+.web-doc .hljs-quote {
+  color: color-mix(in oklab, var(--c-graphite) 88%, var(--c-paper));
+  font-style: italic;
+}
+.web-doc .hljs-title,
+.web-doc .hljs-attr,
+.web-doc .hljs-name,
+.web-doc .hljs-section {
+  color: var(--c-ink);
+  font-weight: 600;
+}
+
+/* ── Tabelle ────────────────────────────────────────────────────────────── */
+
+.web-doc .tableWrapper {
+  overflow-x: auto;
+}
+
+.web-doc table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.web-doc th,
+.web-doc td {
+  border: 1px solid color-mix(in oklab, var(--c-graphite) 25%, transparent);
+  padding: 0.45em 0.7em;
+  text-align: start;
+  vertical-align: top;
+}
+
+.web-doc th {
+  background: color-mix(in oklab, var(--c-graphite) 10%, transparent);
+  font-weight: 600;
+}
+
+.web-doc .selectedCell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklab, var(--c-ink) 12%, transparent);
+  pointer-events: none;
+}
+
+/* ── Diagrammi ──────────────────────────────────────────────────────────── */
+
+.web-doc .mermaid-figure {
+  margin: 0.6em 0 0;
+  padding: 0.6em 0;
+  overflow-x: auto;
+}
+
+/* Mermaid disegna il suo SVG alla dimensione naturale: dentro un contenitore
+   che si stringe sul contenuto, un flowchart di quattro nodi diventava un
+   francobollo. Prende la larghezza del foglio, come un'immagine. */
+.web-doc .mermaid-figure svg {
+  width: 100%;
+  height: auto;
+}
+
+.web-doc .mermaid-error {
+  color: var(--c-ink-red);
+  font-size: 0.8rem;
+  padding: 0.4em 0.6em;
+}

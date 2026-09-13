@@ -2,7 +2,7 @@ import { Download, Moon, Settings2, Sun, Trash2, Upload, Volume2, VolumeX, X } f
 import { AnimatePresence, motion } from 'motion/react'
 import { useRef, useState } from 'react'
 import { SPRING } from '../../lib/constants'
-import { exportNotebooks, parseSnapshot } from '../../lib/storage'
+import { exportNotebooks, parseSnapshot, restoreBlobs } from '../../lib/storage'
 import { DangerButton } from './DangerButton'
 import { useNotebooks } from '../../store/notebooks'
 import type { Notebook } from '../../types'
@@ -28,7 +28,10 @@ export function SettingsSheet() {
   const [pending, setPending] = useState<Notebook[] | null>(null)
   const importFile = async (file: File) => {
     try {
-      const imported = parseSnapshot(await file.text())
+      const snapshot = parseSnapshot(await file.text())
+      // prima le immagini, poi i quaderni: al primo render il documento le cerca
+      await restoreBlobs(snapshot.blobs)
+      const imported = snapshot.notebooks
       if (notebooks.length === 0) {
         replaceAll(imported)
         showToast(`Importati ${imported.length} quaderni.`)
@@ -128,7 +131,7 @@ export function SettingsSheet() {
               <div className="flex gap-xs">
                 <button
                   type="button"
-                  onClick={() => exportNotebooks(notebooks)}
+                  onClick={() => void exportNotebooks(notebooks)}
                   className="flex h-12 flex-1 items-center justify-center gap-2xs rounded-md bg-ink text-xs font-semibold text-paper"
                 >
                   <Download size={17} strokeWidth={2} />
