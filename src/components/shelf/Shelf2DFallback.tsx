@@ -84,21 +84,33 @@ function Spine({
         transform: focused ? 'translateY(-6px)' : undefined,
       }}
     >
-      {/* gli anelli del raccoglitore, anche qui: è il segno che lo distingue */}
-      {binder &&
-        [0.22, 0.5, 0.78].map((f) => (
+      {/* Il raccoglitore, anche qui: la tasca dell'etichetta e due anelli. */}
+      {binder && (
+        <>
           <span
-            key={f}
             aria-hidden="true"
-            className="absolute left-1/2 h-[6px] w-[18px] -translate-x-1/2 rounded-full"
-            style={{ top: `${f * 100}%`, backgroundColor: '#C7CAD1' }}
+            className="absolute inset-x-[4px] rounded-[3px] bg-paper"
+            style={{
+              top: '26%',
+              height: '48%',
+              boxShadow: 'inset 0 0 0 1px color-mix(in oklab, var(--c-graphite) 32%, transparent)',
+            }}
           />
-        ))}
+          {[0.14, 0.86].map((f) => (
+            <span
+              key={f}
+              aria-hidden="true"
+              className="absolute left-1/2 h-[5px] w-[16px] -translate-x-1/2 rounded-full"
+              style={{ top: `${f * 100}%`, backgroundColor: '#8A8F9B' }}
+            />
+          ))}
+        </>
+      )}
       <span
-        className={`absolute inset-x-0 bottom-2 origin-center whitespace-nowrap text-2xs text-ink ${
-          binder ? 'font-semibold' : 'font-hand'
+        className={`absolute inset-x-0 origin-center overflow-hidden whitespace-nowrap text-ink ${
+          binder ? 'bottom-[26%] text-[9px] font-semibold' : 'bottom-2 text-2xs font-hand'
         }`}
-        style={{ writingMode: 'vertical-rl', height: '82%', overflow: 'hidden' }}
+        style={{ writingMode: 'vertical-rl', height: binder ? '48%' : '82%' }}
       >
         {notebook.title}
       </span>

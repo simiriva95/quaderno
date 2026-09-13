@@ -275,8 +275,41 @@ export function paintSpine(
   ctx.fillStyle = coverColor(cover.spineColor)
   ctx.fillRect(0, 0, w, h)
 
-  // titolo scritto lungo il dorso, come sui quaderni veri
   const text = (title || cover.labelText || '').slice(0, 30)
+
+  // Il raccoglitore non ha il titolo scritto sul dorso: ha una tasca con
+  // dentro un'etichetta stampata. È quella, più degli anelli, a farlo
+  // riconoscere di lato — e tiene il testo dentro un rettangolo invece di
+  // farlo correre per tutta l'altezza.
+  if (printed) {
+    const px = w * 0.14
+    const py = h * 0.26
+    const pw = w - px * 2
+    const ph = h * 0.48
+    ctx.fillStyle = cssVar('--c-paper')
+    roundRect(ctx, px, py, pw, ph, 5)
+    ctx.fill()
+    ctx.strokeStyle = cssVar('--c-graphite')
+    ctx.globalAlpha = 0.32
+    ctx.lineWidth = 2
+    ctx.stroke()
+    ctx.globalAlpha = 1
+    if (!text) return
+
+    ctx.save()
+    ctx.translate(w / 2, py + ph / 2)
+    ctx.rotate(-Math.PI / 2)
+    const size = fitText(ctx, text, ph - 22, pw * 0.38, true)
+    ctx.font = labelFont(size, true)
+    ctx.fillStyle = cssVar('--c-ink')
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(text, 0, 0)
+    ctx.restore()
+    return
+  }
+
+  // titolo scritto lungo il dorso, come sui quaderni veri
   if (!text) return
   ctx.save()
   ctx.translate(w / 2, h * 0.9)
