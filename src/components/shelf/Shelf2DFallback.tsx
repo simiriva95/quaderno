@@ -66,6 +66,7 @@ function Spine({
 }) {
   const texture = useCoverTexture(notebook.cover.spineColor, 'plain', 64)
   const { height } = jitter(notebook.id)
+  const binder = notebook.kind === 'web'
 
   return (
     <button
@@ -75,7 +76,7 @@ function Spine({
       aria-label={`Apri ${notebook.title}`}
       className="relative shrink-0 rounded-[3px_6px_6px_3px] transition-transform duration-200 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-[6px]"
       style={{
-        width: 30,
+        width: binder ? 34 : 30,
         height: height * 150,
         backgroundColor: `var(--c-cover-${notebook.cover.spineColor})`,
         backgroundImage: texture ? `url(${texture})` : undefined,
@@ -83,8 +84,20 @@ function Spine({
         transform: focused ? 'translateY(-6px)' : undefined,
       }}
     >
+      {/* gli anelli del raccoglitore, anche qui: è il segno che lo distingue */}
+      {binder &&
+        [0.22, 0.5, 0.78].map((f) => (
+          <span
+            key={f}
+            aria-hidden="true"
+            className="absolute left-1/2 h-[6px] w-[18px] -translate-x-1/2 rounded-full"
+            style={{ top: `${f * 100}%`, backgroundColor: '#C7CAD1' }}
+          />
+        ))}
       <span
-        className="absolute inset-x-0 bottom-2 origin-center whitespace-nowrap font-hand text-2xs text-ink"
+        className={`absolute inset-x-0 bottom-2 origin-center whitespace-nowrap text-2xs text-ink ${
+          binder ? 'font-semibold' : 'font-hand'
+        }`}
         style={{ writingMode: 'vertical-rl', height: '82%', overflow: 'hidden' }}
       >
         {notebook.title}

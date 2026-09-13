@@ -40,6 +40,11 @@ riapri.
 Pensato per chi studia: superiori e università. Si usa dal portatile e dal telefono,
 di giorno e di sera.
 
+Sulla stessa mensola stanno due oggetti diversi. Il **quaderno a mano** — carta a righe,
+matita, pagine che si sfogliano. E il **raccoglitore ad anelli**, per quando si studia
+qualcosa di tecnico: foglio unico che scorre, screenshot incollati e ridimensionabili,
+blocchi di codice con l'evidenziazione, tabelle e diagrammi Mermaid.
+
 ## Cosa fa
 
 <table>
@@ -119,6 +124,23 @@ in fondo girano pagina. Il testo resta modificabile anche ingrandito.
 
 </td>
 </tr>
+<tr>
+<td>
+
+<img src="docs/screenshots/raccoglitore.png" alt="Il raccoglitore Web dev: titolo, un diagramma di RAG disegnato da Mermaid, un blocco di Python con l'evidenziazione, una checklist" />
+
+</td>
+<td>
+
+**Il raccoglitore "Web dev".** Per gli appunti tecnici: un foglio unico che scorre,
+niente impaginazione. Si incolla uno screenshot e lo si ridimensiona trascinando (le
+immagini stanno in IndexedDB, non in `localStorage`), si scrivono blocchi di codice con
+l'evidenziazione, tabelle, checklist, e i diagrammi si disegnano scrivendoli: un blocco
+` ```mermaid ` diventa uno schema. Sulla mensola si riconosce dagli anelli sul dorso e
+dall'etichetta stampata.
+
+</td>
+</tr>
 </table>
 
 <p align="center">
@@ -127,6 +149,8 @@ in fondo girano pagina. Il testo resta modificabile anche ingrandito.
   <img src="docs/screenshots/telefono-testo.png" alt="Scrivere sul telefono: titolo intero, pagina 1 di 2, barra a una riga" width="30%" />
   &nbsp;
   <img src="docs/screenshots/telefono-disegno.png" alt="Disegnare sul telefono: astuccio in basso, pagina intera" width="30%" />
+  &nbsp;
+  <img src="docs/screenshots/telefono-raccoglitore.png" alt="Il raccoglitore sul telefono, di sera: diagramma e codice su un foglio che scorre" width="30%" />
 </p>
 
 E poi: **modalità sera** (una stanza al buio con la lampada, non un'inversione di
@@ -213,6 +237,13 @@ e2e/             flusso-completo · console-pulita · screenshots
 - **La transizione è tutta in DOM.** Al click si proietta il dorso del mesh in pixel di
   finestra e da lì parte un quaderno DOM che vola al centro, si apre e sfoglia. Nessuna
   cucitura fra due rendering, e funziona identica sul fallback 2D.
+- **Il raccoglitore è un altro oggetto, non un'altra carta.** `kind: 'web'` sul quaderno,
+  rotta `#/w/`, scena sua. Il foglio scorre — un'immagine alta novecento pixel non ha un
+  carattere dove tagliare — e le immagini stanno in **IndexedDB**: il documento salvato
+  le cita come `qimg:<id>`, perché `persist` riscrive l'intero array dei quaderni a ogni
+  tasto e un base64 lì dentro sarebbe un `JSON.stringify` da megabyte a ogni battuta.
+  L'editor e Mermaid arrivano in chunk separati, e Mermaid solo quando un diagramma
+  entra davvero in vista.
 - **Il 3D è un cartone animato.** `MeshToonMaterial` a tre toni, contorni con guscio
   rovesciato, parete in GLSL con grana d'intonaco e ombre morbide dipinte, ombre di
   contatto invece della shadow map. `NoToneMapping` per tenere i pastelli fedeli al CSS:
@@ -225,22 +256,27 @@ Ogni scelta, con il perché e i vicoli ciechi, è registrata milestone per miles
 
 | Chiave                             | Cosa                                                     |
 | ---------------------------------- | -------------------------------------------------------- |
-| `quaderno:v1` (localStorage)       | i quaderni e le pagine (`version: 1`, migrazioni pronte) |
+| `quaderno:v1` (localStorage)       | i quaderni e le pagine (`version: 2`, migrazioni pronte) |
+| `quaderno-blobs` (IndexedDB)       | le immagini incollate nei raccoglitori, come `Blob`      |
 | `quaderno:prefs:v1` (localStorage) | tema, suoni, ultimo strumento, corpo del testo           |
 | `quaderno:ui` (sessionStorage)     | pagina corrente, modalità, posizione sulla mensola       |
 
 Se lo spazio finisce, l'app lo dice e resta usabile: lo stato vive in memoria e si
-può esportare. `Impostazioni → Esporta` produce un JSON con tutto; l'import valida il
-file (allowlist stretta di tag e classi) e chiede se aggiungere o sostituire.
+può esportare. `Impostazioni → Esporta` produce un JSON con tutto — immagini comprese, in
+base64, o il backup perderebbe gli screenshot; l'import valida il file (allowlist stretta
+di tag e classi, `src` e `href` ripuliti, e passano solo i blob che sono davvero immagini)
+e chiede se aggiungere o sostituire.
 
 ## Qualità: come si verifica che funzioni
 
 Il progetto non ha test unitari: la copertura è end-to-end e **a schermo**, perché il
 prodotto è quello che si vede.
 
-- **`npm run test:e2e`** — 30 test Playwright su desktop e telefono: crea → scrivi
+- **`npm run test:e2e`** — 40 test Playwright su desktop e telefono: crea → scrivi
   (traboccamento su pagina 2, zero scrollbar) → disegna → undo/redo → ricarica → riapri
-  sulla pagina giusta; export/import; zero errori in console; e rigenera `screenshots/`.
+  sulla pagina giusta; export/import; zero errori in console; e per il raccoglitore:
+  incolla uno screenshot → ricarica → esporta → cancella tutto → reimporta, con
+  l'immagine che torna al suo posto. Rigenera anche `screenshots/`.
 - **`npm run debug:portale`** — un agente che _usa_ l'app come una persona, con le
   animazioni **accese**, su desktop e telefono: scenario guidato e poi azioni a caso.
   Dopo ogni azione verifica gli invarianti (nessun foglio rimasto a mezz'aria,

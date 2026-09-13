@@ -18,3 +18,10 @@ export const navigate = (to: string): void => {
 }
 
 export const useNavigate = () => navigate
+
+/** Il raccoglitore vive sotto `#/w/`, non `#/q/`: gli invarianti del
+ *  `debug:portale` valgono solo dentro `#/q/` e due di loro — «mai una
+ *  scrollbar dentro la carta» e «testo a schermo uguale allo storage» — sono
+ *  la negazione di un foglio che scorre con dentro un documento JSON. */
+export const notebookPath = (n: { id: string; kind?: 'paper' | 'web' }): string =>
+  `${n.kind === 'web' ? '/w/' : '/q/'}${n.id}`

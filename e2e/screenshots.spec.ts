@@ -1,5 +1,5 @@
 import { test, type Page } from '@playwright/test'
-import { DEMO_NOTEBOOK, seed } from './seed'
+import { DEMO_NOTEBOOK, DEMO_RACCOGLITORE, seed } from './seed'
 
 /** Uno scarabocchio deterministico: una spirale e una sottolineatura. */
 const demoStrokes = [
@@ -40,6 +40,8 @@ const manyNotebooks = [
 ].map((color, i) => ({
   ...DEMO_NOTEBOOK,
   id: `n${i}`,
+  // due raccoglitori in mezzo ai quaderni: sulla mensola devono distinguersi
+  ...(i === 3 || i === 7 ? { kind: 'web' as const } : {}),
   title: [
     'Storia',
     'Matematica',
@@ -117,6 +119,14 @@ const shots: { name: string; go: (p: Page) => Promise<void> }[] = [
       await p.waitForSelector('.paper')
       await p.getByRole('radio', { name: 'Disegno' }).click()
       await p.waitForTimeout(600)
+    },
+  },
+  {
+    name: 'raccoglitore',
+    go: async (p) => {
+      await seed(p, [DEMO_RACCOGLITORE])
+      await p.goto('/#/w/raccoglitore')
+      await p.waitForSelector('.mermaid-figure svg', { timeout: 15000 })
     },
   },
   {

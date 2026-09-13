@@ -1,6 +1,9 @@
 import type { Notebook } from '../../types'
 
 export const BOOK_W = 0.17 // spessore del dorso
+/** Il raccoglitore è più grosso, ma non tanto da sfondare il passo della fila:
+ *  lo scarto resta sotto il GAP, quindi i vicini non si toccano. */
+export const BINDER_W = BOOK_W * 1.12
 export const BOOK_H = 1.0
 export const BOOK_D = 0.72
 export const GAP = 0.025
@@ -50,4 +53,5 @@ export const shelfCount = (total: number, perShelf = PER_SHELF) =>
 export const plankWidth = (total: number, perShelf = PER_SHELF) =>
   Math.max(perShelf * 0.4, Math.min(perShelf, total) * (BOOK_W + GAP) + 0.95)
 
-export const notebookKey = (n: Notebook) => `${n.id}:${n.cover.color}:${n.cover.pattern}:${n.title}`
+export const notebookKey = (n: Notebook) =>
+  `${n.id}:${n.kind ?? 'paper'}:${n.cover.color}:${n.cover.pattern}:${n.title}`

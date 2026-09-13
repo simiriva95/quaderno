@@ -79,6 +79,8 @@ const seedNotebooks = (n) =>
       elastic: i % 2 === 0,
     },
     paper: ['lined', 'grid', 'blank'][i % 3],
+    // uno su tre è un raccoglitore: sulla mensola si devono distinguere
+    ...(i % 3 === 2 ? { kind: 'web' } : {}),
     lastOpenedPageIndex: 0,
     pages: [{ id: `p${i}`, text: '', strokes: [], createdAt: 1e12 }],
   }))
@@ -350,12 +352,50 @@ class Audit {
     await this.step('impostazioni', async () => {
       await p.getByRole('button', { name: /Impostazioni/ }).click()
     })
+    // ── il raccoglitore ───────────────────────────────────────────────
+    // Scena diversa, controlli diversi, stessa asticella: zero violazioni
+    // axe, nessun bersaglio sotto i 44px che non sia voluto.
+    await this.step('raccoglitore-atelier', async () => {
+      await p.keyboard.press('Escape')
+      await p.goto(base + '/#/nuovo')
+      await p.getByRole('button', { name: 'Web dev' }).click()
+      await p.getByPlaceholder('Appunti di…').fill('AI Engineering')
+    })
+    await this.step('raccoglitore', async () => {
+      await p.getByRole('button', { name: 'Metti sulla mensola' }).click()
+      await p.waitForURL(/#\/w\//)
+      const ed = p.getByRole('textbox', { name: 'Documento' })
+      await ed.click()
+      await ed.pressSequentially('RAG in due minuti')
+      await p.keyboard.press('Enter')
+      await ed.pressSequentially('```mermaid ')
+      await ed.pressSequentially('flowchart LR')
+      await p.keyboard.press('Enter')
+      await ed.pressSequentially('  Q[Domanda] --> V[(Vector DB)] --> L[LLM]')
+      await p
+        .locator('.mermaid-figure svg')
+        .waitFor({ timeout: 15000 })
+        .catch(() => {})
+      await p.keyboard.press('ArrowDown')
+      await p.keyboard.press('ArrowDown')
+      await ed.pressSequentially('```python ')
+      await ed.pressSequentially('hits = index.query(embed(domanda), top_k=4)')
+      await sleep(700)
+    })
+    await this.step('raccoglitore-tabella', async () => {
+      await p.getByRole('button', { name: 'Tabella' }).click()
+      await sleep(400)
+    })
+
     await this.step('mensola-piena', async () => {
       await p.keyboard.press('Escape')
+      // si arriva qui dal raccoglitore: la rotta va riportata sulla mensola,
+      // o il reload cerca un quaderno che lo storage nuovo non ha
+      await p.goto(base + '/#/')
       await p.evaluate((nbs) => {
         localStorage.setItem(
           'quaderno:v1',
-          JSON.stringify({ state: { notebooks: nbs, quotaExceeded: false }, version: 1 }),
+          JSON.stringify({ state: { notebooks: nbs, quotaExceeded: false }, version: 2 }),
         )
       }, seedNotebooks(9))
       await p.reload()

@@ -142,7 +142,13 @@ export function OpeningTransition({ notebook, from, direction = 'open', onDone }
                 border: '1px dashed color-mix(in oklab, var(--c-graphite) 28%, transparent)',
               }}
             >
-              <span className="font-hand text-base leading-tight text-ink">{notebook.title}</span>
+              <span
+                className={`text-base leading-tight text-ink ${
+                  notebook.kind === 'web' ? 'font-semibold' : 'font-hand'
+                }`}
+              >
+                {notebook.title}
+              </span>
             </div>
 
             {notebook.cover.sticker && (

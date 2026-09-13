@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
-import { useNavigate } from '../lib/router'
+import { notebookPath, useNavigate } from '../lib/router'
 import { AnimatePresence, motion } from 'motion/react'
 import { OpeningTransition, type FlyRect } from '../components/notebook/OpeningTransition'
 import { Shelf2DFallback } from '../components/shelf/Shelf2DFallback'
@@ -59,13 +59,14 @@ export default function Shelf() {
     (id: string, from?: FlyRect) => {
       setShelfRect(from ?? null)
       play('page')
+      const notebook = notebooks.find((n) => n.id === id)
       if (reduced || !from) {
-        navigate(`/q/${id}`)
+        navigate(notebookPath({ id, kind: notebook?.kind }))
         return
       }
       setOpening({ id, from })
     },
-    [navigate, reduced, setShelfRect, play],
+    [navigate, notebooks, reduced, setShelfRect, play],
   )
   const add = useCallback(() => navigate('/nuovo'), [navigate])
 
@@ -177,7 +178,7 @@ export default function Shelf() {
         <OpeningTransition
           notebook={openingNotebook}
           from={opening.from}
-          onDone={() => navigate(`/q/${opening.id}`)}
+          onDone={() => navigate(notebookPath(openingNotebook))}
         />
       )}
 

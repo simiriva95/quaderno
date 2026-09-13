@@ -1,7 +1,7 @@
 import { useFrame, useThree } from '@react-three/fiber'
 import { useEffect, useRef, useState } from 'react'
 import { BoxGeometry, Vector3, type Group, type LineSegments } from 'three'
-import { BOOK_W, jitter, slotFor } from './geometry'
+import { BINDER_W, BOOK_W, jitter, slotFor } from './geometry'
 import { useSpring3 } from './useSpring3'
 import { useCoverTextures } from './useCoverTextures'
 import { useToonGradient } from './toon'
@@ -42,6 +42,9 @@ export function NotebookMesh({
   const outline = useRef<LineSegments>(null)
   const [hovered, setHovered] = useState(false)
   const { height, tilt, depth } = jitter(notebook.id)
+  // Il raccoglitore: un filo più grosso, tre anelli sul dorso, niente elastico.
+  const binder = notebook.kind === 'web'
+  const width = binder ? BINDER_W : BOOK_W
   const maps = useCoverTextures(notebook, themeTick)
   const toon = useToonGradient()
 
@@ -97,7 +100,7 @@ export function NotebookMesh({
     const corners: Vector3[] = []
     for (const sx of [-1, 1])
       for (const sy of [-1, 1])
-        corners.push(new Vector3((sx * BOOK_W) / 2, (sy * height) / 2, depth / 2))
+        corners.push(new Vector3((sx * width) / 2, (sy * height) / 2, depth / 2))
     const b = body.current
     const pts = corners.map((v) => toPx(b ? b.localToWorld(v) : v))
     const xs = pts.map((q) => q.x)
@@ -109,7 +112,7 @@ export function NotebookMesh({
 
   const base = coverColor(notebook.cover.color)
   const spineBase = coverColor(notebook.cover.spineColor)
-  const innerW = BOOK_W - COVER_T * 2
+  const innerW = width - COVER_T * 2
 
   return (
     <group
@@ -148,7 +151,7 @@ export function NotebookMesh({
         {/* le due copertine: la faccia esterna porta la texture, il taglio
             resta del colore del cartone */}
         {[1, -1].map((s) => (
-          <mesh key={s} position={[s * (BOOK_W / 2 - COVER_T / 2), 0, 0]}>
+          <mesh key={s} position={[s * (width / 2 - COVER_T / 2), 0, 0]}>
             <boxGeometry args={[COVER_T, height, depth]} />
             {maps ? (
               <>
@@ -177,7 +180,7 @@ export function NotebookMesh({
 
         {/* dorso: leggermente sporgente, con la texture del titolo */}
         <mesh position={[0, 0, depth / 2 - COVER_T / 2 + 0.004]}>
-          <boxGeometry args={[BOOK_W + 0.004, height + 0.004, COVER_T]} />
+          <boxGeometry args={[width + 0.004, height + 0.004, COVER_T]} />
           {maps ? (
             <>
               <meshToonMaterial gradientMap={toon} attach="material-0" color={spineBase} />
@@ -196,18 +199,35 @@ export function NotebookMesh({
             uno per mesh farebbe righe fra copertina e pagine */}
         <Hull>
           <boxGeometry
-            args={[BOOK_W + 0.004 + OUTLINE * 2, height + 0.004 + OUTLINE * 2, depth + OUTLINE * 2]}
+            args={[width + 0.004 + OUTLINE * 2, height + 0.004 + OUTLINE * 2, depth + OUTLINE * 2]}
           />
         </Hull>
 
         {/* l'elastico, sul taglio davanti: una striscia scura che gira
             attorno al quaderno */}
-        {notebook.cover.elastic && (
+        {notebook.cover.elastic && !binder && (
           <mesh position={[0, 0, -depth / 2 + depth * 0.12]}>
-            <boxGeometry args={[BOOK_W + 0.006, height + 0.004, 0.012]} />
+            <boxGeometry args={[width + 0.006, height + 0.004, 0.012]} />
             <meshToonMaterial gradientMap={toon} color={cssVar('--c-ink')} />
           </mesh>
         )}
+
+        {/* Gli anelli girano attorno al dorso, come su un raccoglitore vero.
+            Il metallo ha un colore suo: di sera cambia la luce, non l'acciaio
+            — con i token gli anelli diventavano neri. Il raggio resta dentro
+            la larghezza del dorso, o sulla fila piena gli anelli finivano
+            addosso ai vicini. */}
+        {binder &&
+          [-0.28, 0, 0.28].map((f) => (
+            <mesh
+              key={f}
+              position={[0, height * f, depth / 2 - 0.004]}
+              rotation={[Math.PI / 2, 0, 0]}
+            >
+              <torusGeometry args={[width * 0.42, 0.011, 8, 24]} />
+              <meshToonMaterial gradientMap={toon} color="#B4B9C4" />
+            </mesh>
+          ))}
       </group>
 
       {/* anello di focus: disegnato in scena, non il contorno di sistema */}
@@ -219,7 +239,7 @@ export function NotebookMesh({
         raycast={() => null}
         position={[0, height / 2, -depth / 2]}
       >
-        <edgesGeometry args={[new BoxGeometry(BOOK_W + 0.05, height + 0.05, depth + 0.05)]} />
+        <edgesGeometry args={[new BoxGeometry(width + 0.05, height + 0.05, depth + 0.05)]} />
         <lineBasicMaterial color={cssVar('--c-ink')} />
       </lineSegments>
     </group>

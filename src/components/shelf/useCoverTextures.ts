@@ -31,7 +31,8 @@ export function useCoverTextures(notebook: Notebook, themeTick: number) {
       coverCv.height = Math.round(SIZE * 1.38)
       const ctx = coverCv.getContext('2d')
       if (!ctx) return
-      paintCoverFace(ctx, notebook.cover, notebook.title, coverCv.width, coverCv.height)
+      const printed = notebook.kind === 'web'
+      paintCoverFace(ctx, notebook.cover, notebook.title, coverCv.width, coverCv.height, printed)
 
       const sticker = notebook.cover.sticker
       if (sticker) {
@@ -49,7 +50,8 @@ export function useCoverTextures(notebook: Notebook, themeTick: number) {
       spineCv.width = 96
       spineCv.height = SIZE
       const sctx = spineCv.getContext('2d')
-      if (sctx) paintSpine(sctx, notebook.cover, notebook.title, spineCv.width, spineCv.height)
+      if (sctx)
+        paintSpine(sctx, notebook.cover, notebook.title, spineCv.width, spineCv.height, printed)
 
       if (cancelled) return
       setMaps({
@@ -63,7 +65,7 @@ export function useCoverTextures(notebook: Notebook, themeTick: number) {
     return () => {
       cancelled = true
     }
-  }, [notebook.cover, notebook.title, themeTick])
+  }, [notebook.cover, notebook.title, notebook.kind, themeTick])
 
   useEffect(
     () => () => {

@@ -27,6 +27,48 @@ checkbox nel testo, che scalano con la pagina.
 Bundle: primo paint 58.7 KB gzip; il chunk della mensola 3D (three.js) 236 KB gzip, caricato
 dopo.
 
+### Secondo giro — 13/09, dopo il raccoglitore
+
+Il tipo di quaderno "Web dev" aggiunge tre passi al percorso dell'audit
+(`raccoglitore-atelier`, `raccoglitore`, `raccoglitore-tabella`) su tutti e quattro i
+profili, e un quaderno su tre della mensola piena è ora un raccoglitore.
+
+|                           | desktop | desktop sera | tablet | telefono |
+| ------------------------- | ------- | ------------ | ------ | -------- |
+| violazioni axe (18 passi) | 0       | 0            | 0      | 0        |
+| errori console            | 0       | 0            | 0      | 0        |
+| testi < 12px              | 0       | 0            | 0      | 0        |
+| overflow orizzontale      | mai     | mai          | mai    | mai      |
+
+Trovate e corrette in questo giro, tutte nel raccoglitore:
+
+- **`color-contrast` (serious) su `.hljs-comment`.** Il commento era smorzato con la
+  trasparenza (`color-mix(… 62%, transparent)`) e scendeva sotto l'AA. Ora si mescola con
+  la carta, non con il nulla.
+- **`empty-table-header` (minor), 3 nodi.** Una tabella nuova nasceva con l'intestazione
+  vuota. Ora le colonne nascono con un nome, che si riscrive al volo.
+- **Codice sotto i 12px.** `.web-doc code` e `.web-doc pre` avevano entrambi `font-size:
+0.88em`, e il `code` dentro il `pre` la applicava due volte: 11.8px. Ora il `code`
+  dentro un `pre` resta a `1em`.
+
+Bersagli sotto 44px: resta l'elenco voluto (la lista `sr-only` della mensola, gli input
+file nascosti — a cui si aggiunge quello dell'immagine nel raccoglitore). Da mettere agli
+atti: `scripts/audit.mjs` misura i 44px anche sui link in linea nel testo, che per natura
+non possono rispettarli; è un'eccezione corretta, non un bug da inseguire.
+
+Bundle (gzip, misurato sulla build di produzione):
+
+| Cosa                                  | KB gzip | Quando arriva                           |
+| ------------------------------------- | ------- | --------------------------------------- |
+| primo paint (`index.js`)              | 59      | sempre (era 58.7)                       |
+| mensola 3D (three.js)                 | 236     | aprendo la mensola                      |
+| editor del raccoglitore (`WebDoc.js`) | 160     | solo su `#/w/`                          |
+| mermaid, per un flowchart             | 258     | solo quando un diagramma entra in vista |
+
+I 258 KB di mermaid arrivano in 35 chunk e valgono per la prima resa, poi restano in cache.
+Un documento senza diagrammi non ne scarica nessuno: si controlla aprendo il pannello di
+rete su un foglio senza blocchi `mermaid`.
+
 Fascia "subito" del piano completata il 12/09 (voci 1–9, ✅ nel testo). Corretto prima di scrivere il piano: colori del disegno (erano tutti neri: il canvas
 non risolve `var()`), astuccio sotto la pagina sul telefono, evidenziatore su più righe,
 baseline dei titoli sulla seconda riga, home vuota in 3D.
