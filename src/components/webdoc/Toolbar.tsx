@@ -72,15 +72,12 @@ function Floating({
 }) {
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
 
-  // La posizione si misura sul DOM: è l'unico modo di sapere dov'è il tasto,
-  // e va fatto in layout o la targhetta lampeggia nell'angolo prima di
-  // mettersi a posto.
-  // eslint-disable-next-line react/set-state-in-effect
+  // La posizione si misura sul DOM: è l'unico modo di sapere dov'è il tasto.
+  // In layout e non in un effetto normale, o la targhetta lampeggia
+  // nell'angolo prima di mettersi a posto. Chiudendo non si azzera niente:
+  // non si disegna nulla, e alla riapertura la misura arriva prima del paint.
   useLayoutEffect(() => {
-    if (!open || !anchor.current) {
-      setPos(null)
-      return
-    }
+    if (!open || !anchor.current) return
     const place = () => {
       const r = anchor.current?.getBoundingClientRect()
       if (r) setPos({ x: r.left + r.width / 2, y: r.top })
