@@ -5,6 +5,7 @@ import { Placeholder } from '@tiptap/extensions/placeholder'
 import { Image } from '@tiptap/extension-image'
 import { Highlight } from '@tiptap/extension-highlight'
 import { useEffect, useRef } from 'react'
+import { useUi } from '../../store/ui'
 import { putBlob, shrink } from '../../lib/blobs'
 import { dehydrate, hydrate, scrub } from '../../lib/docimages'
 import { newId } from '../../lib/id'
@@ -27,6 +28,7 @@ interface Props {
 }
 
 export function Editor({ stored, onSave, onPing }: Props) {
+  const showToast = useUi((s) => s.showToast)
   // Gli object URL delle immagini: creati qui, revocati allo smontaggio.
   const urls = useRef(new Map<string, string>())
   const timer = useRef<number | null>(null)
@@ -63,7 +65,11 @@ export function Editor({ stored, onSave, onPing }: Props) {
       TableHeader,
       TableCell,
       Image.configure({
-        allowBase64: false,
+        // Incollando da una pagina web l'immagine arriva dentro l'HTML, come
+        // `data:` o come indirizzo remoto. Si lascia entrare e subito dopo
+        // `adotta` la porta nel magazzino: così non resta mai un base64 nel
+        // documento né un'immagine che vive sul sito di qualcun altro.
+        allowBase64: true,
         resize: { enabled: true, minWidth: 80, alwaysPreserveAspectRatio: true },
       }),
     ],
@@ -74,9 +80,16 @@ export function Editor({ stored, onSave, onPing }: Props) {
         'aria-label': 'Documento',
         class: 'tiptap',
       },
-      handlePaste: (_view, event) => insert(editorRef.current, event.clipboardData?.files, urls),
-      handleDrop: (_view, event) =>
-        insert(editorRef.current, (event as DragEvent).dataTransfer?.files, urls),
+      handlePaste: (_view, event) => {
+        if (insert(editorRef.current, event.clipboardData?.files, urls)) return true
+        adottaDopo()
+        return false
+      },
+      handleDrop: (_view, event) => {
+        if (insert(editorRef.current, (event as DragEvent).dataTransfer?.files, urls)) return true
+        adottaDopo()
+        return false
+      },
     },
     onUpdate: ({ editor: e }) => {
       latest.current = e.getJSON()
@@ -89,6 +102,14 @@ export function Editor({ stored, onSave, onPing }: Props) {
 
   const editorRef = useRef<TiptapEditor | null>(null)
   editorRef.current = editor
+
+  // ProseMirror incolla l'HTML per conto suo (e il testo attorno va tenuto):
+  // le immagini forestiere si adottano subito dopo, quando sono nel documento.
+  const adottaDopo = () => {
+    setTimeout(() => {
+      void adotta(editorRef.current, urls.current, showToast)
+    }, 0)
+  }
 
   // Il documento salvato cita `qimg:<id>`: i blob arrivano da IndexedDB e
   // diventano object URL solo qui dentro, e muoiono con l'effetto.
@@ -175,4 +196,63 @@ function insert(
     }
   })()
   return true
+}
+
+/** ── Adottare le immagini forestiere ──────────────────────────────────────
+ *  Un'immagine incollata da una pagina web entra come `data:` (megabyte che
+ *  finirebbero in localStorage) o come indirizzo remoto (che sparisce al
+ *  primo reload, perché all'apertura teniamo solo i nostri `qimg:`). In
+ *  entrambi i casi si scarica, si rimpicciolisce e si mette nel magazzino.
+ *  Quello che non si riesce a prendere — una CORS, o si è offline — non resta
+ *  a metà: il nodo se ne va e lo diciamo.                                   */
+async function adotta(
+  editor: TiptapEditor | null,
+  urls: Map<string, string>,
+  showToast: (t: string | null) => void,
+): Promise<void> {
+  if (!editor) return
+  const nostri = new Set(urls.values())
+  let perse = 0
+
+  // una alla volta, rileggendo lo stato: ogni modifica sposta le posizioni
+  for (let giro = 0; giro < 20; giro++) {
+    let pos: number | null = null
+    let src = ''
+    editor.state.doc.descendants((node, at) => {
+      if (pos !== null) return false
+      if (node.type.name !== 'image') return
+      const value: unknown = node.attrs['src']
+      if (typeof value !== 'string' || nostri.has(value)) return
+      pos = at
+      src = value
+      return false
+    })
+    if (pos === null) break
+
+    const blob = await fetch(src)
+      .then((r) => (r.ok ? r.blob() : null))
+      .catch(() => null)
+
+    if (!blob || !blob.type.startsWith('image/')) {
+      perse++
+      editor.chain().setNodeSelection(pos).deleteSelection().run()
+      continue
+    }
+
+    const piccola = await shrink(blob)
+    const id = newId()
+    const url = URL.createObjectURL(piccola)
+    urls.set(id, url)
+    nostri.add(url)
+    editor.chain().setNodeSelection(pos).updateAttributes('image', { src: url }).run()
+    await putBlob(id, piccola)
+  }
+
+  if (perse > 0) {
+    showToast(
+      perse === 1
+        ? "Un'immagine non si è lasciata copiare. Salvala e trascinala qui."
+        : `${perse} immagini non si sono lasciate copiare. Salvale e trascinale qui.`,
+    )
+  }
 }

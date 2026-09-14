@@ -187,6 +187,62 @@ test("l'immagine si ridimensiona trascinando l'angolo, e resta com'è dopo un re
   expect(Math.abs(dopoReload - dopo)).toBeLessThan(4)
 })
 
+/** Un PNG 2×1 vero, come una foto scelta dalla libreria del telefono. */
+const FOTO = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+)
+
+test('dal telefono si prende una foto dalla libreria, con Inserisci → Immagine', async ({
+  page,
+}) => {
+  await nuovoRaccoglitore(page, 'Dal telefono')
+  const editor = page.getByRole('textbox', { name: 'Documento' })
+  await editor.click()
+
+  await page.getByRole('button', { name: 'Inserisci' }).click()
+  await page.getByRole('menuitem', { name: /Immagine/ }).click()
+  await page
+    .locator('input[type="file"][accept="image/*"]')
+    .setInputFiles({ name: 'foto.png', mimeType: 'image/png', buffer: FOTO })
+
+  await expect(editor.locator('img')).toBeVisible()
+  await expect
+    .poll(async () => (await testoSalvato(page)).pages[0]!.text, { timeout: 5000 })
+    .toContain('qimg:')
+  // le maniglie, sul telefono come altrove, le prova il test del
+  // trascinamento: qui conta che dalla libreria foto si arrivi nel documento
+})
+
+test('una foto incollata dentro del testo diventa nostra, e il testo resta', async ({ page }) => {
+  await nuovoRaccoglitore(page, 'Incollata')
+  const editor = page.getByRole('textbox', { name: 'Documento' })
+  await editor.click()
+
+  // la forma che arriva incollando da una pagina web: HTML con dentro un
+  // `data:`, che senza adozione finirebbe in localStorage a megabyte
+  await page.evaluate(() => {
+    const c = document.createElement('canvas')
+    c.width = 300
+    c.height = 150
+    c.getContext('2d')!.fillRect(0, 0, 300, 150)
+    const dt = new DataTransfer()
+    dt.setData('text/html', `<p>guarda qui</p><img src="${c.toDataURL('image/png')}">`)
+    const ed = document.querySelector<HTMLElement>('.tiptap')!
+    ed.focus()
+    ed.dispatchEvent(
+      new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }),
+    )
+  })
+
+  await expect(editor.locator('img')).toBeVisible()
+  await expect(editor).toContainText('guarda qui')
+
+  const salvato = async () => (await testoSalvato(page)).pages[0]!.text
+  await expect.poll(salvato, { timeout: 6000 }).toContain('qimg:')
+  expect(await salvato()).not.toContain('data:image')
+})
+
 test("il collegamento chiede l'indirizzo sul posto, senza prompt di sistema", async ({ page }) => {
   await nuovoRaccoglitore(page, 'Link')
   const editor = page.getByRole('textbox', { name: 'Documento' })

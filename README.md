@@ -133,8 +133,11 @@ in fondo girano pagina. Il testo resta modificabile anche ingrandito.
 <td>
 
 **Il raccoglitore "Web dev".** Per gli appunti tecnici: un foglio unico che scorre,
-niente impaginazione. Si incolla uno screenshot e lo si ridimensiona trascinando (le
-immagini stanno in IndexedDB, non in `localStorage`), si scrivono blocchi di codice con
+niente impaginazione. Si incolla uno screenshot — o lo si prende dalla libreria
+foto del telefono, con **Inserisci → Immagine** — e lo si ridimensiona trascinando un
+angolo (le immagini stanno in IndexedDB, non in `localStorage`, e quelle incollate da una
+pagina web vengono copiate nel magazzino invece di restare appese al sito di qualcun
+altro), si scrivono blocchi di codice con
 l'evidenziazione, tabelle, checklist, citazioni, collegamenti, e i diagrammi si disegnano
 scrivendoli: un blocco ` ```mermaid ` diventa uno schema. Ogni tasto dice come si chiama —
 targhetta con la scorciatoia al passaggio del mouse e col focus — e i blocchi si scelgono
@@ -274,7 +277,7 @@ e chiede se aggiungere o sostituire.
 Il progetto non ha test unitari: la copertura è end-to-end e **a schermo**, perché il
 prodotto è quello che si vede.
 
-- **`npm run test:e2e`** — 44 test Playwright su desktop e telefono: crea → scrivi
+- **`npm run test:e2e`** — 50 test Playwright su desktop e telefono: crea → scrivi
   (traboccamento su pagina 2, zero scrollbar) → disegna → undo/redo → ricarica → riapri
   sulla pagina giusta; export/import; zero errori in console; e per il raccoglitore:
   incolla uno screenshot → ricarica → esporta → cancella tutto → reimporta, con
