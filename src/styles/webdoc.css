@@ -80,9 +80,62 @@
   box-shadow: var(--sh-paper);
 }
 
-.web-doc img.ProseMirror-selectednode {
+/* ── Ridimensionare l'immagine ──────────────────────────────────────────
+   Le maniglie arrivano dall'estensione senza un filo di stile: quattro div
+   da 0×0, invisibili e impossibili da prendere. Qui diventano quattro
+   quadretti seduti sugli angoli, che compaiono quando l'immagine è scelta o
+   quando il mouse ci passa sopra. */
+
+.web-doc [data-resize-container],
+.web-doc [data-resize-wrapper] {
+  max-width: 100%;
+}
+
+/* Il contenitore è largo quanto la riga: rimpicciolita l'immagine, il
+   contorno restava largo com'era. Si stringe su quello che contiene. */
+.web-doc [data-resize-container] {
+  width: fit-content;
+}
+
+.web-doc [data-resize-container].ProseMirror-selectednode {
   outline: 2px solid var(--c-ink);
-  outline-offset: 2px;
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
+.web-doc [data-resize-handle] {
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  background: var(--c-paper);
+  box-shadow:
+    0 0 0 2px var(--c-ink),
+    var(--sh-paper);
+  opacity: 0;
+  transition: opacity 160ms var(--ease-quint);
+}
+
+.web-doc [data-resize-container]:hover [data-resize-handle],
+.web-doc [data-resize-container].ProseMirror-selectednode [data-resize-handle] {
+  opacity: 1;
+}
+
+/* ogni maniglia sta a cavallo del suo angolo, con la freccia giusta */
+.web-doc [data-resize-handle='top-left'] {
+  transform: translate(-50%, -50%);
+  cursor: nwse-resize;
+}
+.web-doc [data-resize-handle='top-right'] {
+  transform: translate(50%, -50%);
+  cursor: nesw-resize;
+}
+.web-doc [data-resize-handle='bottom-left'] {
+  transform: translate(-50%, 50%);
+  cursor: nesw-resize;
+}
+.web-doc [data-resize-handle='bottom-right'] {
+  transform: translate(50%, 50%);
+  cursor: nwse-resize;
 }
 
 /* Il segnaposto del primo paragrafo vuoto. */

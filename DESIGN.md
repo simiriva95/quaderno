@@ -529,3 +529,13 @@ basta uno, e usa la stessa tinta della carta (`--c-hl-yellow`), non un giallo da
 
 **Le scorciatoie si scrivono col simbolo giusto.** `⌘⌥C` su Mac, `Ctrl+Alt+C` altrove:
 una scorciatoia scritta con i tasti sbagliati è peggio che non scriverla.
+
+**Le maniglie del ridimensionamento arrivavano senza stile.** Quattro `div` da 0×0, sugli
+angoli, invisibili e impossibili da prendere: il trascinamento c'era e non l'avrebbe mai
+trovato nessuno. Ora sono quattro quadretti seduti a cavallo degli angoli, che compaiono
+quando l'immagine è scelta o quando il mouse ci passa sopra, con la freccia giusta per
+ogni angolo.
+
+**Il contenitore dell'immagine si stringe su quello che contiene.** È largo quanto la
+riga: rimpicciolita l'immagine, il contorno della selezione restava largo com'era, e
+sembrava che l'immagine ci ballasse dentro.

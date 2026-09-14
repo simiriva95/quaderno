@@ -144,6 +144,49 @@ test('i tasti dicono come si chiamano, e il menu inserisce', async ({ page }) =>
   await expect(page.locator('.mermaid-figure svg')).toBeVisible({ timeout: 15000 })
 })
 
+test("l'immagine si ridimensiona trascinando l'angolo, e resta com'è dopo un reload", async ({
+  page,
+}) => {
+  await nuovoRaccoglitore(page, 'Immagine')
+  const editor = page.getByRole('textbox', { name: 'Documento' })
+  await editor.click()
+  await incollaImmagine(page)
+
+  const img = editor.locator('img')
+  await expect(img).toBeVisible()
+  const prima = (await img.boundingBox())!.width
+
+  // l'immagine si sceglie, e agli angoli compaiono le maniglie
+  await img.click()
+  const maniglia = page.locator('[data-resize-handle="bottom-right"]')
+  await expect(maniglia).toBeVisible()
+
+  const b = (await maniglia.boundingBox())!
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(b.x - 60, b.y - 30, { steps: 12 })
+  // l'ultimo movimento deve essere stato disegnato prima di lasciare: al
+  // rilascio la misura finale si legge dal DOM
+  await page.waitForTimeout(200)
+  await page.mouse.up()
+
+  await expect.poll(async () => (await img.boundingBox())!.width).toBeLessThan(prima - 20)
+  const dopo = Math.round((await img.boundingBox())!.width)
+
+  // la larghezza finisce nel documento salvato, non solo negli stili
+  await expect
+    .poll(async () => (await testoSalvato(page)).pages[0]!.text, { timeout: 5000 })
+    .toContain(`"width":${dopo}`)
+
+  await page.reload()
+  await expect(page.getByRole('textbox', { name: 'Documento' }).locator('img')).toBeVisible()
+  const dopoReload = (await page
+    .getByRole('textbox', { name: 'Documento' })
+    .locator('img')
+    .boundingBox())!.width
+  expect(Math.abs(dopoReload - dopo)).toBeLessThan(4)
+})
+
 test("il collegamento chiede l'indirizzo sul posto, senza prompt di sistema", async ({ page }) => {
   await nuovoRaccoglitore(page, 'Link')
   const editor = page.getByRole('textbox', { name: 'Documento' })
