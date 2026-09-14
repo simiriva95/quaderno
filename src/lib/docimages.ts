@@ -49,8 +49,16 @@ export function dehydrate(doc: JSONContent, urls: Map<string, string>): JSONCont
   const byUrl = new Map([...urls].map(([id, url]) => [url, id]))
   walk(doc, (n) => {
     const src = srcOf(n)
-    const id = src && byUrl.get(src)
-    if (id && n.attrs) n.attrs['src'] = `qimg:${id}`
+    if (!src || !n.attrs) return
+    const id = byUrl.get(src)
+    if (id) {
+      n.attrs['src'] = `qimg:${id}`
+      return
+    }
+    // Rete di sicurezza: un `data:` che sia sfuggito all'adozione porterebbe
+    // megabyte dentro localStorage, che è la cosa che questo quaderno esiste
+    // per non fare.
+    if (src.startsWith('data:')) delete n.attrs['src']
   })
   return doc
 }

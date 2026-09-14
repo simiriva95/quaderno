@@ -56,7 +56,11 @@ export async function sweep(keep: Set<string>): Promise<number> {
 export async function shrink(file: Blob, max = 1600): Promise<Blob> {
   if (typeof OffscreenCanvas === 'undefined' || typeof createImageBitmap === 'undefined')
     return file
-  const bmp = await createImageBitmap(file)
+  // Non tutto si lascia decodificare: una foto HEIC dell'iPhone, su un browser
+  // che non la legge, fa fallire `createImageBitmap`. Meglio tenersi il file
+  // com'è che perdere l'immagine.
+  const bmp = await createImageBitmap(file).catch(() => null)
+  if (!bmp) return file
   const k = Math.min(1, max / Math.max(bmp.width, bmp.height))
   if (k === 1 && file.size < 300_000) {
     bmp.close()

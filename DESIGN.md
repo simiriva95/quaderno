@@ -539,3 +539,27 @@ ogni angolo.
 **Il contenitore dell'immagine si stringe su quello che contiene.** È largo quanto la
 riga: rimpicciolita l'immagine, il contorno della selezione restava largo com'era, e
 sembrava che l'immagine ci ballasse dentro.
+
+## M10 — Dal telefono
+
+**Sul telefono non si incolla: si prende dalla libreria.** Il percorso vero è
+"Inserisci → Immagine", che apre la libreria foto o la fotocamera. Funziona già, ma non lo
+diceva nessuno: ora la voce di menu ha il suo nome e il suo suggerimento ("o incollala e
+basta").
+
+**Un'immagine incollata da una pagina web non era nostra.** Arrivava dentro l'HTML in due
+forme, e nessuna delle due andava bene: come `data:` spariva senza dire niente
+(`allowBase64: false` la buttava), come indirizzo remoto entrava e poi svaniva al primo
+reload — perché all'apertura teniamo solo i `src` della forma `qimg:`, e uno straniero
+veniva ripulito. Silenziosamente, che è il modo peggiore.
+
+Ora qualunque immagine forestiera viene **adottata**: si scarica, si rimpicciolisce, va in
+IndexedDB e nel documento resta un `qimg:` come tutte le altre. Il testo attorno
+all'immagine non si perde, perché la si lascia incollare a ProseMirror e si adotta subito
+dopo. Quello che non si riesce a prendere — una CORS, o si è offline — non resta a metà: il
+nodo se ne va e lo si dice con un avviso. E `dehydrate` ha una rete di sicurezza: un
+`data:` sfuggito all'adozione non arriva comunque in `localStorage`.
+
+**Una foto dell'iPhone può essere HEIC.** Su un browser che non la decodifica
+`createImageBitmap` fallisce: prima si perdeva l'immagine, ora si tiene il file com'è. Non
+rimpicciolito, ma presente.
