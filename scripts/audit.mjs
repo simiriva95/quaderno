@@ -382,8 +382,12 @@ class Audit {
       await ed.pressSequentially('hits = index.query(embed(domanda), top_k=4)')
       await sleep(700)
     })
+    await this.step('raccoglitore-inserisci', async () => {
+      await p.getByRole('button', { name: 'Inserisci' }).click()
+      await sleep(300)
+    })
     await this.step('raccoglitore-tabella', async () => {
-      await p.getByRole('button', { name: 'Tabella' }).click()
+      await p.getByRole('menuitem', { name: /Tabella/ }).click()
       await sleep(400)
     })
 

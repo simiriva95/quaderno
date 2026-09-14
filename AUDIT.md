@@ -29,13 +29,14 @@ dopo.
 
 ### Secondo giro — 13/09, dopo il raccoglitore
 
-Il tipo di quaderno "Web dev" aggiunge tre passi al percorso dell'audit
-(`raccoglitore-atelier`, `raccoglitore`, `raccoglitore-tabella`) su tutti e quattro i
-profili, e un quaderno su tre della mensola piena è ora un raccoglitore.
+Il tipo di quaderno "Web dev" aggiunge quattro passi al percorso dell'audit
+(`raccoglitore-atelier`, `raccoglitore`, `raccoglitore-inserisci`, `raccoglitore-tabella`)
+su tutti e quattro i profili, e un quaderno su tre della mensola piena è ora un
+raccoglitore.
 
 |                           | desktop | desktop sera | tablet | telefono |
 | ------------------------- | ------- | ------------ | ------ | -------- |
-| violazioni axe (18 passi) | 0       | 0            | 0      | 0        |
+| violazioni axe (19 passi) | 0       | 0            | 0      | 0        |
 | errori console            | 0       | 0            | 0      | 0        |
 | testi < 12px              | 0       | 0            | 0      | 0        |
 | overflow orizzontale      | mai     | mai          | mai    | mai      |
@@ -51,6 +52,15 @@ Trovate e corrette in questo giro, tutte nel raccoglitore:
 0.88em`, e il `code` dentro il `pre` la applicava due volte: 11.8px. Ora il `code`
   dentro un `pre` resta a `1em`.
 
+Terzo giro, dopo il vassoio che si spiega:
+
+- **`color-contrast` (serious), 10 nodi.** Le scorciatoie da tastiera nel menu "Inserisci"
+  erano smorzate con l'opacità. Una scorciatoia è testo da leggere: ora è `--c-graphite`
+  pieno.
+- **`region` (moderate).** Targhette e menu vivono in un portale — un contenitore che
+  scorre ritaglia anche in verticale, e sopra la barra sparivano — e in fondo al `body`
+  restavano fuori da ogni punto di riferimento della pagina. Il portale entra in `<main>`.
+
 Bersagli sotto 44px: resta l'elenco voluto (la lista `sr-only` della mensola, gli input
 file nascosti — a cui si aggiunge quello dell'immagine nel raccoglitore). Da mettere agli
 atti: `scripts/audit.mjs` misura i 44px anche sui link in linea nel testo, che per natura
@@ -62,7 +72,7 @@ Bundle (gzip, misurato sulla build di produzione):
 | ------------------------------------- | ------- | --------------------------------------- |
 | primo paint (`index.js`)              | 59      | sempre (era 58.7)                       |
 | mensola 3D (three.js)                 | 236     | aprendo la mensola                      |
-| editor del raccoglitore (`WebDoc.js`) | 160     | solo su `#/w/`                          |
+| editor del raccoglitore (`WebDoc.js`) | 163     | solo su `#/w/`                          |
 | mermaid, per un flowchart             | 258     | solo quando un diagramma entra in vista |
 
 I 258 KB di mermaid arrivano in 35 chunk e valgono per la prima resa, poi restano in cache.

@@ -500,3 +500,32 @@ scrivania.
 **La checkbox delle cose da fare ha un'etichetta.** Il `TaskItem` di serie è un
 `input` nudo dentro una `label` vuota: è la stessa violazione axe già corretta una
 volta su `TODO_HTML`, e sarebbe rientrata dalla finestra.
+
+## M9 — Il vassoio che si spiega
+
+**Le icone non bastano quando non sono oggetti.** Nel quaderno a mano gli strumenti sono
+penne colorate: si capiscono a vista. Qui `<>` e `[<>]` sono due cose diverse — codice in
+mezzo al testo e blocco di codice — e nessuno lo indovina. Quindi ogni tasto dice come si
+chiama: una targhetta al passaggio del mouse **e col focus da tastiera**, con la
+scorciatoia accanto; `title` da solo arriva dopo un secondo e non si vede mai.
+
+**I blocchi si scelgono per nome, in un menu.** "Inserisci" elenca titolo, sottotitolo,
+elenchi, cose da fare, citazione, blocco di codice, diagramma, tabella, immagine, riga,
+togli formattazione — con nome, icona e scorciatoia. È anche l'unico posto dove si scopre
+che il diagramma esiste: la voce ne inserisce uno già scritto, da modificare. Una barra di
+sole icone non lo avrebbe mai raccontato.
+
+**Targhette e menu vivono in un portale.** La barra scorre in orizzontale sul telefono, e
+un contenitore che scorre in orizzontale ritaglia anche in verticale: tutto ciò che stava
+sopra la barra spariva. Il portale entra in `<main>` e non in fondo al `body`, o axe
+segnala contenuto fuori dai punti di riferimento della pagina.
+
+**Il collegamento chiede l'indirizzo sul posto.** Niente `prompt()` di sistema, come per
+le azioni distruttive. Senza niente di selezionato scrive l'indirizzo stesso: è quello che
+si voleva, e un link su una selezione vuota non avrebbe su cosa posarsi.
+
+**Un evidenziatore anche qui.** Il quaderno a mano ne ha tre; per ripassare del codice ne
+basta uno, e usa la stessa tinta della carta (`--c-hl-yellow`), non un giallo da schermo.
+
+**Le scorciatoie si scrivono col simbolo giusto.** `⌘⌥C` su Mac, `Ctrl+Alt+C` altrove:
+una scorciatoia scritta con i tasti sbagliati è peggio che non scriverla.

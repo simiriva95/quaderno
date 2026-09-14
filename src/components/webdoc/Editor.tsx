@@ -3,6 +3,7 @@ import type { Editor as TiptapEditor, JSONContent } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import { Placeholder } from '@tiptap/extensions/placeholder'
 import { Image } from '@tiptap/extension-image'
+import { Highlight } from '@tiptap/extension-highlight'
 import { useEffect, useRef } from 'react'
 import { putBlob, shrink } from '../../lib/blobs'
 import { dehydrate, hydrate, scrub } from '../../lib/docimages'
@@ -51,6 +52,9 @@ export function Editor({ stored, onSave, onPing }: Props) {
         link: { protocols: ['http', 'https', 'mailto'], openOnClick: false },
       }),
       Placeholder.configure({ placeholder: PLACEHOLDER }),
+      // L'evidenziatore è il gesto di chi ripassa: il quaderno a mano ne ha
+      // tre, qui basta un colore.
+      Highlight,
       TaskList,
       TaskItem.configure({ nested: true }),
       CodeBlock,
