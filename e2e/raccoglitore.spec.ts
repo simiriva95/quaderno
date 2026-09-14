@@ -126,6 +126,37 @@ test('export e import riportano anche le immagini', async ({ page }) => {
   expect(await ripreso.evaluate((el: HTMLImageElement) => el.naturalWidth)).toBe(240)
 })
 
+test('i tasti dicono come si chiamano, e il menu inserisce', async ({ page }) => {
+  await nuovoRaccoglitore(page, 'Strumenti')
+  const editor = page.getByRole('textbox', { name: 'Documento' })
+  await editor.click()
+
+  // la targhetta arriva anche col focus da tastiera, non solo col mouse
+  await page.getByRole('button', { name: 'Evidenzia' }).hover()
+  await expect(page.getByRole('tooltip')).toContainText('Evidenzia')
+
+  // i blocchi si scelgono per nome
+  await page.getByRole('button', { name: 'Inserisci' }).click()
+  const menu = page.getByRole('menu', { name: 'Cosa inserire' })
+  await expect(menu.getByRole('menuitem', { name: /Diagramma/ })).toBeVisible()
+  await expect(menu.getByRole('menuitem', { name: /Citazione/ })).toBeVisible()
+  await menu.getByRole('menuitem', { name: /Diagramma/ }).click()
+  await expect(page.locator('.mermaid-figure svg')).toBeVisible({ timeout: 15000 })
+})
+
+test("il collegamento chiede l'indirizzo sul posto, senza prompt di sistema", async ({ page }) => {
+  await nuovoRaccoglitore(page, 'Link')
+  const editor = page.getByRole('textbox', { name: 'Documento' })
+  await editor.click()
+  await editor.pressSequentially('Udemy')
+  await page.keyboard.press('ControlOrMeta+a')
+
+  await page.getByRole('button', { name: 'Collegamento' }).click()
+  await page.getByRole('textbox', { name: 'Indirizzo del collegamento' }).fill('udemy.com')
+  await page.getByRole('button', { name: 'Applica' }).click()
+  await expect(editor.locator('a[href="https://udemy.com"]')).toHaveText('Udemy')
+})
+
 test('svuotare il foglio lo svuota davvero, anche dopo un reload', async ({ page }) => {
   await nuovoRaccoglitore(page, 'Da buttare')
   const editor = page.getByRole('textbox', { name: 'Documento' })

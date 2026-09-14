@@ -95,6 +95,21 @@
   pointer-events: none;
 }
 
+/* L'evidenziatore: la stessa tinta della carta, non un giallo da schermo. */
+.web-doc mark {
+  background: var(--c-hl-yellow);
+  color: var(--c-ink);
+  border-radius: 3px;
+  padding: 0 0.12em;
+  box-decoration-break: clone;
+}
+
+.web-doc hr {
+  border: 0;
+  border-top: 1px solid color-mix(in oklab, var(--c-graphite) 28%, transparent);
+  margin: 1.4em 0;
+}
+
 /* ── Codice ─────────────────────────────────────────────────────────────── */
 
 .web-doc code,
