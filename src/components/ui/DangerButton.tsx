@@ -34,7 +34,9 @@ export function DangerButton({
       }}
       aria-live="polite"
       className={`flex h-12 items-center gap-sm rounded-md px-md text-xs transition-colors ${
-        arming ? 'bg-ink-red text-paper' : 'bg-desk text-ink-red hover:bg-desk-deep'
+        arming
+          ? 'bg-ink-red text-paper'
+          : 'bg-danger-surface text-ink-red hover:bg-danger-surface-hover'
       } ${className}`}
     >
       {icon}

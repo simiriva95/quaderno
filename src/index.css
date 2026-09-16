@@ -16,7 +16,7 @@
     background:
       radial-gradient(
         120% 90% at 18% -10%,
-        color-mix(in oklab, var(--c-paper-warm) 62%, transparent) 0%,
+        color-mix(in oklab, var(--c-paper-warm) 26%, transparent) 0%,
         transparent 58%
       ),
       var(--c-desk);

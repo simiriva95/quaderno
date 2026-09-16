@@ -9,15 +9,19 @@
 :root {
   color-scheme: light;
 
-  /* superfici */
-  --c-paper: oklch(97.7% 0.01 81.8);
+  /* Superfici. La carta sta SOPRA la scrivania: fra le due ci vuole un
+     salto che si veda. Prima erano 97.7% e 92.9% — un rapporto di 1.15:1,
+     cioè niente, e da quando la pagina si prende tutto lo schermo l'app di
+     giorno era un foglio bianco senza bordi. Adesso il salto è 1.74:1: un
+     piano caldo di legno chiaro, e sopra un foglio che si stacca. */
+  --c-paper: oklch(97.4% 0.014 84);
   --c-paper-warm: oklch(98% 0.024 88.2);
-  --c-paper-edge: oklch(94% 0.014 80);
-  --c-desk: oklch(92.9% 0.019 75.3);
-  --c-desk-deep: oklch(87% 0.024 72);
-  --c-wall: oklch(93% 0.016 68); /* intonaco caldo dietro la mensola */
-  --c-wood: oklch(82% 0.068 70);
-  --c-wood-deep: oklch(67% 0.078 65);
+  --c-paper-edge: oklch(91% 0.02 80);
+  --c-desk: oklch(80% 0.036 74);
+  --c-desk-deep: oklch(70% 0.042 70);
+  --c-wall: oklch(86% 0.03 68); /* intonaco: più chiaro del piano, prende luce */
+  --c-wood: oklch(72% 0.075 66);
+  --c-wood-deep: oklch(58% 0.08 60);
 
   /* inchiostri */
   --c-ink: oklch(37.4% 0.08 268.5);
@@ -27,6 +31,12 @@
   --c-ink-violet: oklch(43.2% 0.104 300.4);
   --c-rule: oklch(85% 0.028 245.5); /* righe carta */
   --c-margin: oklch(70% 0.11 25); /* margine rosso */
+
+  /* Il tassello di un'azione che cancella: sulla carta, non sulla scrivania.
+     L'inchiostro rosso è quello della penna e non si tocca, ma sul piano
+     nuovo scenderebbe a 3.63:1 — qui sopra sta a 5.57:1. */
+  --c-danger-surface: oklch(93.5% 0.03 25);
+  --c-danger-surface-hover: oklch(89% 0.042 25);
 
   /* evidenziatori */
   --c-hl-yellow: oklch(93.2% 0.118 96.7);
@@ -77,6 +87,9 @@
   --c-rule: oklch(38% 0.02 240);
   --c-margin: oklch(48% 0.08 25);
 
+  --c-danger-surface: oklch(32% 0.05 25);
+  --c-danger-surface-hover: oklch(38% 0.06 25);
+
   --c-hl-yellow: oklch(52% 0.09 96);
   --c-hl-mint: oklch(50% 0.05 169);
   --c-hl-pink: oklch(50% 0.055 359);
@@ -106,6 +119,8 @@
   --color-paper-edge: var(--c-paper-edge);
   --color-desk: var(--c-desk);
   --color-desk-deep: var(--c-desk-deep);
+  --color-danger-surface: var(--c-danger-surface);
+  --color-danger-surface-hover: var(--c-danger-surface-hover);
   --color-wall: var(--c-wall);
   --color-wood: var(--c-wood);
   --color-wood-deep: var(--c-wood-deep);
