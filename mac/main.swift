@@ -93,7 +93,12 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
   private func ridimensiona(_ delta: CGSize) {
     let ora = pannello.contentSize
-    let nuova = limita(NSSize(width: ora.width + delta.width, height: ora.height + delta.height))
+    // Il pannello è centrato sull'icona: metà di quanto cresce se ne va a
+    // sinistra, e il bordo destro si muove della metà del dito. Raddoppiando,
+    // l'angolo resta sotto il cursore — che è l'unica cosa che una maniglia
+    // deve fare. In altezza no: in alto è appeso, cresce solo in giù.
+    let nuova = limita(
+      NSSize(width: ora.width + delta.width * 2, height: ora.height + delta.height))
     guard nuova != ora else { return }
     pannello.contentSize = nuova
     UserDefaults.standard.set([nuova.width, nuova.height], forKey: Self.misuraSalvata)
