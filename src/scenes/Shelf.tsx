@@ -97,7 +97,7 @@ export default function Shelf() {
 
   return (
     <main className="relative flex h-dvh flex-col bg-desk">
-      <header className="flex items-center justify-between px-lg py-md">
+      <header className="flex items-center justify-between border-b border-desk-deep/40 px-lg py-md">
         <h1 className="font-hand text-xl text-ink">I miei quaderni</h1>
         <div className="flex items-center gap-sm">
           {notebooks.length > 0 && (

@@ -17,7 +17,7 @@ export function makeWallMaterial(
 
   return new ShaderMaterial({
     uniforms: {
-      uTop: { value: new Color(cssVar('--c-paper-warm')) },
+      uTop: { value: new Color(cssVar('--c-wall-top')) },
       uMid: { value: new Color(cssVar('--c-wall')) },
       uBottom: { value: new Color(cssVar('--c-desk-deep')) },
       uShelfY: { value: ys },
