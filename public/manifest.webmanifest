@@ -1,0 +1,22 @@
+{
+  "name": "Il Quaderno degli Appunti",
+  "short_name": "Quaderno",
+  "description": "Un quaderno di carta che vive nel browser. I tuoi appunti restano sul tuo dispositivo.",
+  "lang": "it",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#EFE6DA",
+  "theme_color": "#EFE6DA",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
