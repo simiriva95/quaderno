@@ -19,7 +19,7 @@
 import AppKit
 import WebKit
 
-final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
+final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate, WKScriptMessageHandler {
   private var voce: NSStatusItem!
   private var pannello: NSPanel!
   private let nido = NSView(frame: NSRect(x: 0, y: 0, width: 480, height: 726))
@@ -29,6 +29,7 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
   private var web: WKWebView!
   private var finestra: NSWindow?
   private var indirizzo: URL!
+  private let striscia = NSView()
 
   func applicationDidFinishLaunching(_: Notification) {
     let info = Bundle.main.infoDictionary ?? [:]
@@ -39,6 +40,12 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
     // dare a una WKWebView i service worker: senza, niente pagina offline.
     conf.limitsNavigationsToAppBoundDomains = true
     conf.websiteDataStore = .default() // su disco: gli appunti sopravvivono all'uscita
+    // La striscia in cima deve avere il colore della scrivania di DENTRO.
+    // L'aspetto di sistema non basta: il tema si sceglie anche nell'app, e
+    // con macOS di sera e il quaderno di giorno restava una fascia nera.
+    conf.userContentController.add(self, name: "tinta")
+    conf.userContentController.addUserScript(
+      WKUserScript(source: Self.spia, injectionTime: .atDocumentEnd, forMainFrameOnly: true))
 
     nido.setFrameSize(misuraRicordata())
 
@@ -50,7 +57,7 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
     web.allowsBackForwardNavigationGestures = false
     web.load(URLRequest(url: indirizzo))
     nido.addSubview(web)
-    nido.addSubview(striscia())
+    nido.addSubview(costruisciStriscia())
 
     pannello = costruisciPannello()
 
@@ -141,22 +148,56 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
   }
 
   /// Una striscia sottile in cima al pannello, del colore della scrivania.
-  /// Non ha più niente dentro — «apri in finestra» sta nel menu col tasto
-  /// destro — ma resta: copre la barra del titolo, che è vuota ma esiste, e
-  /// senza di lei i tasti in cima all'app finirebbero sotto la zona che
-  /// macOS si tiene per sé.
-  private func striscia() -> NSView {
+  /// Non ha niente dentro — «apri in finestra» sta nel menu col tasto destro —
+  /// ma resta: copre la barra del titolo, che è vuota ma esiste, e senza di lei
+  /// i tasti in cima all'app finirebbero sotto la zona che macOS si tiene.
+  private func costruisciStriscia() -> NSView {
     let h = Self.barraH
-    let striscia = NSView(frame: NSRect(x: 0, y: nido.bounds.height - h, width: nido.bounds.width, height: h))
+    striscia.frame = NSRect(x: 0, y: nido.bounds.height - h, width: nido.bounds.width, height: h)
     striscia.autoresizingMask = [.width, .minYMargin]
     striscia.wantsLayer = true
-    striscia.layer?.backgroundColor = NSColor(name: nil) { aspetto in
-      aspetto.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-        ? NSColor(red: 0.109, green: 0.098, blue: 0.087, alpha: 1) // #1C1916, --c-desk sera
-        : NSColor(red: 0.812, green: 0.729, blue: 0.631, alpha: 1) // #CFBAA1, --c-desk giorno
-    }.cgColor
-
+    tinge(NSColor(red: 0.812, green: 0.729, blue: 0.631, alpha: 1)) // finché la pagina non risponde
     return striscia
+  }
+
+  private func tinge(_ c: NSColor) {
+    striscia.layer?.backgroundColor = c.cgColor
+  }
+
+  /// Dice al nativo di che colore è la scrivania, adesso e a ogni cambio di
+  /// tema. Il token è in `oklch()` e Safari lo restituisce tale e quale: a
+  /// convertirlo in tre byte sRGB ci pensa un canvas da un pixel, che è
+  /// l'unico posto dove il colore diventa davvero quello dipinto.
+  private static let spia = """
+    (function () {
+      const sonda = document.createElement('div')
+      sonda.style.cssText = 'position:fixed;left:-9999px;background:var(--c-desk)'
+      document.documentElement.appendChild(sonda)
+      const tela = document.createElement('canvas')
+      tela.width = tela.height = 1
+      const pennello = tela.getContext('2d', { willReadFrequently: true })
+      const dillo = () => {
+        try {
+          pennello.clearRect(0, 0, 1, 1)
+          pennello.fillStyle = getComputedStyle(sonda).backgroundColor
+          pennello.fillRect(0, 0, 1, 1)
+          const [r, g, b, a] = pennello.getImageData(0, 0, 1, 1).data
+          if (a > 200) window.webkit?.messageHandlers?.tinta?.postMessage(r + ',' + g + ',' + b)
+        } catch (e) {}
+      }
+      dillo()
+      new MutationObserver(dillo).observe(document.documentElement, {
+        attributes: true, attributeFilter: ['data-theme'],
+      })
+      matchMedia('(prefers-color-scheme: dark)').addEventListener('change', dillo)
+    })()
+    """
+
+  func userContentController(_: WKUserContentController, didReceive m: WKScriptMessage) {
+    guard m.name == "tinta", let s = m.body as? String else { return }
+    let n = s.split(separator: ",").compactMap { Double($0) }
+    guard n.count == 3, n.allSatisfy({ $0 >= 0 && $0 <= 255 }) else { return }
+    tinge(NSColor(red: n[0] / 255, green: n[1] / 255, blue: n[2] / 255, alpha: 1))
   }
 
   // ── La voce nella barra ───────────────────────────────────────────────
