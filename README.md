@@ -4,11 +4,12 @@
   Un quaderno di carta che vive nel browser. Una mensola in 3D, quaderni con la copertina
   che scegli tu, pagine a righe su cui il testo cade davvero sulle righe, e una matita.
   <br />
-  Zero backend, zero login: tutto resta sul tuo dispositivo.
+  Zero backend, zero login: tutto resta sul tuo dispositivo. Si installa sul telefono
+  e sta nella barra dei menu del Mac, e funziona anche senza rete.
 </p>
 
 <p align="center">
-  <a href="https://quaderno-simiriva95s-projects.vercel.app"><strong>Provalo →</strong></a>
+  <a href="https://quaderno-two.vercel.app"><strong>Provalo →</strong></a>
   &nbsp;·&nbsp;
   <a href="#come-funziona">Come funziona</a>
   &nbsp;·&nbsp;
@@ -23,8 +24,9 @@
 
 <p align="center"><sub>
 <em>English:</em> a client-side notebook for students. A cel-shaded 3D shelf, notebooks you design yourself,
-ruled pages where handwriting-style text sits exactly on the lines, and a pencil. No backend, no account:
-everything lives in <code>localStorage</code>. Italian UI. MIT.
+ruled pages where handwriting-style text sits exactly on the lines, and a pencil. Installable as a PWA and as
+a macOS menu-bar app; works offline. No backend, no account: everything lives in <code>localStorage</code>.
+Italian UI. MIT.
 </sub></p>
 
 ---
@@ -86,6 +88,13 @@ l'anteprima resta fissa in alto mentre scegli.
 un caso. Titoli, cinque inchiostri, tre evidenziatori, sottolineato, caselle da
 spuntare. Tre corpi di scrittura. Quando la pagina finisce, il testo trabocca sulla
 successiva: mai una scrollbar dentro la carta.
+
+La carta si prende tutto lo schermo: intestazione e vassoio galleggiano sopra la
+scrivania, e il margine che resta scoperto è calcolato sull'altezza vera delle barre,
+così cade sul bordo bianco della pagina e mai sulla prima riga scritta. Si gira con
+le frecce, con gli angoli, con uno swipe sul telefono, e **con due dita sul trackpad**:
+una scorsa orizzontale manda decine di eventi, e la pausa fra uno e l'altro è quel che
+dice dove finisce una sfogliata e ne comincia un'altra.
 
 </td>
 <td>
@@ -158,6 +167,37 @@ esiste. Sulla mensola si riconosce dagli anelli sul dorso e dall'etichetta stamp
   <img src="docs/screenshots/telefono-raccoglitore.png" alt="Il raccoglitore sul telefono, di sera: diagramma e codice su un foglio che scorre" width="30%" />
 </p>
 
+## Si installa
+
+<table>
+<tr>
+<td width="46%">
+
+**Sul telefono.** Safari → Condividi → _Aggiungi a Home_. Icona sua, schermo pieno,
+e **funziona senza rete**: un service worker da cinquanta righe e nessuna dipendenza.
+Gli asset di Vite hanno già l'hash nel nome, quindi una copia in cache non è mai
+vecchia; l'HTML invece cambia sotto lo stesso indirizzo, e lì si prova prima la rete
+e si tiene la copia di ieri solo per quando la rete non risponde. C'è anche un motivo
+pratico: iOS cancella i dati dei siti non aperti da sette giorni, e le app installate
+sono esenti.
+
+**Sul Mac.** `./mac/build.sh --installa` e il quaderno sta nella barra in alto a
+destra. Novanta righe di AppKit e nessun progetto Xcode: uno `swiftc`, un plist
+scritto dallo script, una firma ad-hoc — nessun account sviluppatore. Il pannello è un
+`NSPanel` senza titolo appeso alla sua icona, quindi i bordi li ridimensiona macOS, da
+tutti i lati. Il tasto destro apre il menu; da lì si passa a una finestra vera, che sa
+andare a schermo intero. L'archivio della `WKWebView` è separato da quello di Safari:
+sul Mac il quaderno è uno, quello della barra.
+
+</td>
+<td width="54%">
+
+<img src="docs/screenshots/mac-pannello.png" alt="Il pannello nella barra dei menu del Mac: un quaderno aperto in doppia pagina, le frecce ai lati, il vassoio in basso" />
+
+</td>
+</tr>
+</table>
+
 E poi: **modalità sera** (una stanza al buio con la lampada, non un'inversione di
 colori), **suoni sintetizzati** opzionali (fruscio della pagina, matita, il "tump" del
 quaderno che si posa), **export/import JSON** con "aggiungi" o "sostituisci", svuota
@@ -186,6 +226,8 @@ Node 20+. Nessuna variabile d'ambiente, nessun servizio esterno.
 | `npm run debug:portale [url]` | l'agente che _usa_ l'app e cerca bug (vedi sotto)                    |
 | `npm run audit [url]`         | l'agente che percorre tutti i casi d'uso e scrive `.audit/report.md` |
 | `node scripts/screens.mjs`    | rigenera gli screenshot di questo README in `docs/screenshots/`      |
+| `node scripts/icons.mjs`      | rigenera le icone dell'app installata da un disegno solo             |
+| `./mac/build.sh [--installa]` | costruisce l'app per la barra dei menu del Mac (serve Xcode)         |
 
 I test e gli agenti usano il browser di Playwright, da installare una volta:
 
@@ -302,16 +344,19 @@ Il progetto Vercel è collegato a questo repo: ogni push su `main` va in produzi
 altro branch ha la sua preview. `vercel.json` gestisce il rewrite SPA e la cache degli
 asset. Per un deploy manuale: `vercel --prod`.
 
-Niente service worker, per scelta: su un'app che vive in `localStorage` aggiungerebbe
-una cache da invalidare in cambio di un offline che il browser già garantisce dopo la
-prima visita.
+Il service worker sta in `public/sw.js` e si registra solo in produzione. Non usa
+workbox e non ha una lista di file da precaricare: gli asset di Vite hanno l'hash nel
+nome, quindi una copia in cache non è mai vecchia e si tiene; l'HTML cambia sotto lo
+stesso indirizzo, quindi prima la rete e la copia solo come rete di sicurezza — sempre
+salvata sotto `/`, così anche una pagina profonda mai visitata si apre in metropolitana.
+Su `/sw.js` la cache è disattivata, o un service worker vecchio resterebbe al suo posto.
 
 ## Cosa manca, e cosa viene dopo
 
 Il piano prioritizzato è in [AUDIT.md](AUDIT.md). Le prossime cose: modificare
 copertina e nome dopo la creazione, esportare una pagina come immagine o un quaderno
 in PDF, ordinare la mensola per ultima modifica, cercare nel testo, modalità solo-penna
-per chi disegna con lo stilo, annulla nel testo, manifest per "Aggiungi a Home".
+per chi disegna con lo stilo, annulla nel testo.
 
 Fuori perimetro, volutamente: cloud, account, collaborazione, notifiche. Toglierebbero
 all'oggetto il suo carattere.
