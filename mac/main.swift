@@ -2,7 +2,12 @@
 //
 // Non è SwiftUI: MenuBarExtra apre un pannello che non prende il fuoco da
 // tastiera, e in un quaderno dove non si può scrivere non c'è quaderno.
-// NSStatusItem + NSPopover + una attivazione esplicita: banale, e funziona.
+//
+// E non è nemmeno più un NSPopover. Un popover non si ridimensiona: la
+// maniglia disegnata a mano funzionava, ma il pannello sta centrato sotto la
+// sua icona e tirando un angolo si muovevano tutti e due i bordi. Qui c'è un
+// NSPanel con la barra del titolo trasparente e vuota: sembra un popover, e
+// i bordi li ridimensiona macOS, da tutti i lati, coi cursori giusti.
 //
 // Una sola WKWebView, che si sposta: dal pannello alla finestra e ritorno.
 // Due istanze scriverebbero lo stesso localStorage in contemporanea, e
@@ -16,10 +21,11 @@ import WebKit
 
 final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
   private var voce: NSStatusItem!
-  private let pannello = NSPopover()
+  private var pannello: NSPanel!
   private let nido = NSView(frame: NSRect(x: 0, y: 0, width: 480, height: 726))
   private static let barraH: CGFloat = 26
   private static let misuraSalvata = "misuraPannello"
+  private static let minima = NSSize(width: 360, height: 420)
   private var web: WKWebView!
   private var finestra: NSWindow?
   private var indirizzo: URL!
@@ -42,13 +48,8 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
     web.load(URLRequest(url: indirizzo))
     nido.addSubview(web)
     nido.addSubview(strisciaConEspandi())
-    nido.addSubview(maniglia())
 
-    let contenitore = NSViewController()
-    contenitore.view = nido
-    pannello.contentViewController = contenitore
-    pannello.contentSize = nido.bounds.size
-    pannello.behavior = .transient
+    pannello = costruisciPannello()
 
     voce = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     voce.button?.image = NSImage(systemSymbolName: "book.closed", accessibilityDescription: "Quaderno")
@@ -57,6 +58,62 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
     voce.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
 
     NSApp.mainMenu = menuPrincipale()
+  }
+
+  // ── Il pannello appeso all'icona ──────────────────────────────────────
+
+  /// Titolata ma senza titolo e senza semaforo: `.titled` è la condizione che
+  /// AppKit mette per dare a una finestra i bordi che si tirano, e
+  /// `.fullSizeContentView` restituisce al contenuto i ventotto pixel che la
+  /// barra del titolo si sarebbe presa. Non si sposta: è appesa a un'icona,
+  /// non poggiata sulla scrivania.
+  private func costruisciPannello() -> NSPanel {
+    let p = NSPanel(
+      contentRect: NSRect(origin: .zero, size: nido.bounds.size),
+      styleMask: [.titled, .resizable, .fullSizeContentView, .utilityWindow],
+      backing: .buffered, defer: false)
+    p.titleVisibility = .hidden
+    p.titlebarAppearsTransparent = true
+    p.titlebarSeparatorStyle = .none
+    for tasto in [NSWindow.ButtonType.closeButton, .miniaturizeButton, .zoomButton] {
+      p.standardWindowButton(tasto)?.isHidden = true
+    }
+    p.isMovable = false
+    p.isFloatingPanel = true
+    p.becomesKeyOnlyIfNeeded = false // ci si scrive dentro: il fuoco deve poterci arrivare
+    p.hidesOnDeactivate = true // via il fuoco, via il pannello: come faceva il popover
+    p.isReleasedWhenClosed = false
+    p.level = .floating
+    p.minSize = Self.minima
+    p.contentView = nido
+    p.delegate = self
+    return p
+  }
+
+  private func mostraPannello() {
+    if finestra != nil { return } // il quaderno è nell'altra finestra: il pannello sarebbe vuoto
+    pannello.setContentSize(misuraRicordata())
+    appendi()
+    NSApp.activate(ignoringOtherApps: true)
+    pannello.makeKeyAndOrderFront(nil)
+  }
+
+  /// Sotto la sua icona: centrato su di lei, appena sotto la barra dei menu,
+  /// e dentro lo schermo anche quando l'icona sta all'estremità.
+  private func appendi() {
+    guard let bottone = voce.button, let suaFinestra = bottone.window else { return }
+    let icona = suaFinestra.convertToScreen(bottone.convert(bottone.bounds, to: nil))
+    let schermo = (suaFinestra.screen ?? NSScreen.main)?.visibleFrame ?? .zero
+    var f = pannello.frame
+    f.origin.x = min(max(schermo.minX + 8, icona.midX - f.width / 2), schermo.maxX - f.width - 8)
+    f.origin.y = max(schermo.minY + 8, icona.minY - 6 - f.height)
+    pannello.setFrame(f, display: false)
+  }
+
+  func windowDidResize(_ n: Notification) {
+    guard n.object as? NSWindow === pannello else { return }
+    let s = pannello.frame.size
+    UserDefaults.standard.set([s.width, s.height], forKey: Self.misuraSalvata)
   }
 
   /// La misura dell'ultima volta, o quella di partenza.
@@ -71,37 +128,8 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
   private func limita(_ s: NSSize) -> NSSize {
     let schermo = NSScreen.main?.visibleFrame.size ?? NSSize(width: 1440, height: 900)
     return NSSize(
-      width: min(max(360, s.width), schermo.width - 40),
-      height: min(max(420, s.height), schermo.height - 40))
-  }
-
-  /// L'angolo in basso a destra si tira, e il pannello cresce restando
-  /// appeso alla sua icona. NSPopover non si ridimensiona da solo, ma
-  /// `contentSize` si può cambiare mentre è aperto: si riposiziona e resta
-  /// ancorato. Sedici pixel nell'angolo, dove sotto c'è scrivania e non carta.
-  private func maniglia() -> NSView {
-    // Sei pixel dentro: il pannello ha gli angoli stondati e ci ritaglia
-    // sopra — appiccicata al vertice se ne vedeva un trattino solo.
-    let lato: CGFloat = 18
-    let bordo: CGFloat = 6
-    let m = Maniglia(
-      frame: NSRect(x: nido.bounds.width - lato - bordo, y: bordo, width: lato, height: lato))
-    m.autoresizingMask = [.minXMargin, .maxYMargin]
-    m.tirata = { [weak self] delta in self?.ridimensiona(delta) }
-    return m
-  }
-
-  private func ridimensiona(_ delta: CGSize) {
-    let ora = pannello.contentSize
-    // Il pannello è centrato sull'icona: metà di quanto cresce se ne va a
-    // sinistra, e il bordo destro si muove della metà del dito. Raddoppiando,
-    // l'angolo resta sotto il cursore — che è l'unica cosa che una maniglia
-    // deve fare. In altezza no: in alto è appeso, cresce solo in giù.
-    let nuova = limita(
-      NSSize(width: ora.width + delta.width * 2, height: ora.height + delta.height))
-    guard nuova != ora else { return }
-    pannello.contentSize = nuova
-    UserDefaults.standard.set([nuova.width, nuova.height], forKey: Self.misuraSalvata)
+      width: min(max(Self.minima.width, s.width), schermo.width - 40),
+      height: min(max(Self.minima.height, s.height), schermo.height - 40))
   }
 
   /// Quel che resta al quaderno sotto la striscia.
@@ -110,9 +138,8 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
   }
 
   /// Una striscia sottile in cima al pannello, del colore della scrivania, con
-  /// il tasto per aprire la finestra. Il menu col tasto destro c'era già, ma
-  /// un tasto che non si vede è un tasto che non esiste — e in ogni angolo
-  /// dove metterlo galleggiante ci sta già qualcosa dell'app.
+  /// il tasto per aprire la finestra. Copre esattamente la barra del titolo
+  /// vuota, che senza di lei si vedrebbe come una fascia grigia.
   private func strisciaConEspandi() -> NSView {
     let h = Self.barraH
     let striscia = NSView(frame: NSRect(x: 0, y: nido.bounds.height - h, width: nido.bounds.width, height: h))
@@ -144,12 +171,8 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
     if NSApp.currentEvent?.type == .rightMouseUp { return menuScorciatoie() }
     // Se la finestra è già aperta, il pannello sarebbe vuoto: porta su quella.
     if let f = finestra { return mostra(f) }
-    if pannello.isShown { return pannello.performClose(nil) }
-    guard let bottone = voce.button else { return }
-    pannello.show(relativeTo: bottone.bounds, of: bottone, preferredEdge: .minY)
-    // Senza questa riga il pannello si vede ma la tastiera non lo raggiunge.
-    NSApp.activate(ignoringOtherApps: true)
-    pannello.contentViewController?.view.window?.makeKey()
+    if pannello.isVisible { return pannello.orderOut(nil) }
+    mostraPannello()
   }
 
   private func menuScorciatoie() {
@@ -170,7 +193,7 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
   @objc private func apriFinestra() {
     if let f = finestra { return mostra(f) }
-    pannello.performClose(nil)
+    pannello.orderOut(nil)
 
     let f = NSWindow(
       contentRect: NSRect(x: 0, y: 0, width: 1100, height: 820),
@@ -195,7 +218,8 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
     f.makeKeyAndOrderFront(nil)
   }
 
-  func windowWillClose(_: Notification) {
+  func windowWillClose(_ n: Notification) {
+    guard n.object as? NSWindow === finestra else { return }
     // La web view torna nel pannello, o al prossimo clic non ci sarebbe niente.
     web.frame = areaWeb
     nido.addSubview(web, positioned: .below, relativeTo: nido.subviews.first)
@@ -238,36 +262,6 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
   @objc private func apriBrowser() { NSWorkspace.shared.open(indirizzo) }
   @objc private func ricarica() { web.reload() }
-}
-
-/// Sedici pixel nell'angolo che si tirano. Tre trattini in diagonale, come
-/// ovunque: un angolo che non si annuncia non lo tira nessuno.
-final class Maniglia: NSView {
-  var tirata: ((CGSize) -> Void)?
-  private var ultimo = NSPoint.zero
-
-  override func resetCursorRects() { addCursorRect(bounds, cursor: .crosshair) }
-  override func mouseDown(with _: NSEvent) { ultimo = NSEvent.mouseLocation }
-
-  override func mouseDragged(with _: NSEvent) {
-    let ora = NSEvent.mouseLocation
-    // In basso a destra: a destra cresce la larghezza, in giù l'altezza —
-    // e sullo schermo la y cresce verso l'alto, da qui il segno rovesciato.
-    tirata?(CGSize(width: ora.x - ultimo.x, height: ultimo.y - ora.y))
-    ultimo = ora
-  }
-
-  override func draw(_: NSRect) {
-    NSColor.secondaryLabelColor.withAlphaComponent(0.6).setStroke()
-    let p = NSBezierPath()
-    p.lineWidth = 1.5
-    p.lineCapStyle = .round
-    for d in [CGFloat(6), 11, 16] {
-      p.move(to: NSPoint(x: bounds.maxX - d, y: bounds.minY + 1))
-      p.line(to: NSPoint(x: bounds.maxX - 1, y: bounds.minY + d))
-    }
-    p.stroke()
-  }
 }
 
 let app = NSApplication.shared
