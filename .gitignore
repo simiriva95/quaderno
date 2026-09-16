@@ -8,3 +8,4 @@ playwright-report
 .debugger
 .scratch
 .audit
+mac/build
