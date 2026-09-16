@@ -48,6 +48,11 @@ if [[ "${1:-}" == "--installa" ]]; then
   pkill -f "Quaderno.app/Contents/MacOS/Quaderno" 2>/dev/null || true
   rm -rf /Applications/Quaderno.app
   cp -R "$APP" /Applications/
-  open /Applications/Quaderno.app
+  # LaunchServices tiene ancora il bundle vecchio a quel percorso: aperto
+  # subito risponde -600. Una registrazione esplicita, e se serve un secondo
+  # tentativo, costano meno di un errore che sembra un guasto.
+  /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+    -f /Applications/Quaderno.app 2>/dev/null || true
+  open /Applications/Quaderno.app 2>/dev/null || { sleep 2; open /Applications/Quaderno.app; }
   echo "installata e avviata: guarda in alto a destra"
 fi
