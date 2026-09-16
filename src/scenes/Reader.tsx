@@ -208,6 +208,38 @@ export default function Reader({ id }: { id: string }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [go])
 
+  // Due dita sul trackpad, a destra o a sinistra: la pagina gira come sotto
+  // un dito sul telefono. Una scorsa sola manda decine di eventi, quindi si
+  // somma finché il gesto è in corso e si gira una volta: la pausa che li
+  // separa è quella che dice dove finisce una scorsa e ne comincia un'altra.
+  useEffect(() => {
+    let somma = 0
+    let girato = false
+    let riposo: ReturnType<typeof setTimeout>
+    const onWheel = (e: WheelEvent) => {
+      // verticale è scorrimento, non sfogliata: la carta non scorre, ma
+      // rubare anche quello significherebbe bloccare la pagina sotto il dito
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return
+      e.preventDefault()
+      clearTimeout(riposo)
+      riposo = setTimeout(() => {
+        somma = 0
+        girato = false
+      }, 140)
+      if (girato) return
+      somma += e.deltaX
+      if (Math.abs(somma) < 80) return
+      girato = true
+      // due dita verso sinistra spingono la pagina via: la successiva
+      go(somma > 0 ? 1 : -1)
+    }
+    window.addEventListener('wheel', onWheel, { passive: false })
+    return () => {
+      window.removeEventListener('wheel', onWheel)
+      clearTimeout(riposo)
+    }
+  }, [go])
+
   const swipe = useRef(0)
   // le funzioni di zoom sono definite più sotto (dipendono dal layout):
   // il listener da tastiera le raggiunge tramite ref

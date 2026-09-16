@@ -44,10 +44,13 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     web = WKWebView(frame: areaWeb, configuration: conf)
     web.autoresizingMask = [.width, .height]
-    web.allowsBackForwardNavigationGestures = true
+    // Due dita orizzontali servono a girare pagina, non a tornare indietro
+    // nella cronologia: con le rotte a cancelletto sarebbe anche lo stesso
+    // documento, e il gesto se le prendeva prima che arrivassero alla pagina.
+    web.allowsBackForwardNavigationGestures = false
     web.load(URLRequest(url: indirizzo))
     nido.addSubview(web)
-    nido.addSubview(strisciaConEspandi())
+    nido.addSubview(striscia())
 
     pannello = costruisciPannello()
 
@@ -137,10 +140,12 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
     NSRect(x: 0, y: 0, width: nido.bounds.width, height: nido.bounds.height - Self.barraH)
   }
 
-  /// Una striscia sottile in cima al pannello, del colore della scrivania, con
-  /// il tasto per aprire la finestra. Copre esattamente la barra del titolo
-  /// vuota, che senza di lei si vedrebbe come una fascia grigia.
-  private func strisciaConEspandi() -> NSView {
+  /// Una striscia sottile in cima al pannello, del colore della scrivania.
+  /// Non ha più niente dentro — «apri in finestra» sta nel menu col tasto
+  /// destro — ma resta: copre la barra del titolo, che è vuota ma esiste, e
+  /// senza di lei i tasti in cima all'app finirebbero sotto la zona che
+  /// macOS si tiene per sé.
+  private func striscia() -> NSView {
     let h = Self.barraH
     let striscia = NSView(frame: NSRect(x: 0, y: nido.bounds.height - h, width: nido.bounds.width, height: h))
     striscia.autoresizingMask = [.width, .minYMargin]
@@ -151,17 +156,6 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
         : NSColor(red: 0.937, green: 0.902, blue: 0.855, alpha: 1) // #EFE6DA
     }.cgColor
 
-    let tasto = NSButton(frame: NSRect(x: striscia.bounds.width - h, y: 1, width: h - 2, height: h - 2))
-    tasto.autoresizingMask = [.minXMargin]
-    tasto.bezelStyle = .accessoryBarAction
-    tasto.isBordered = false
-    tasto.image = NSImage(
-      systemSymbolName: "arrow.up.left.and.arrow.down.right", accessibilityDescription: "Apri in finestra")
-    tasto.imageScaling = .scaleProportionallyDown
-    tasto.toolTip = "Apri in finestra"
-    tasto.target = self
-    tasto.action = #selector(apriFinestra)
-    striscia.addSubview(tasto)
     return striscia
   }
 
