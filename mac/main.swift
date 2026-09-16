@@ -19,6 +19,7 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
   private let pannello = NSPopover()
   private let nido = NSView(frame: NSRect(x: 0, y: 0, width: 480, height: 726))
   private static let barraH: CGFloat = 26
+  private static let misuraSalvata = "misuraPannello"
   private var web: WKWebView!
   private var finestra: NSWindow?
   private var indirizzo: URL!
@@ -33,12 +34,15 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
     conf.limitsNavigationsToAppBoundDomains = true
     conf.websiteDataStore = .default() // su disco: gli appunti sopravvivono all'uscita
 
+    nido.setFrameSize(misuraRicordata())
+
     web = WKWebView(frame: areaWeb, configuration: conf)
     web.autoresizingMask = [.width, .height]
     web.allowsBackForwardNavigationGestures = true
     web.load(URLRequest(url: indirizzo))
     nido.addSubview(web)
     nido.addSubview(strisciaConEspandi())
+    nido.addSubview(maniglia())
 
     let contenitore = NSViewController()
     contenitore.view = nido
@@ -53,6 +57,46 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
     voce.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
 
     NSApp.mainMenu = menuPrincipale()
+  }
+
+  /// La misura dell'ultima volta, o quella di partenza.
+  private func misuraRicordata() -> NSSize {
+    let m = UserDefaults.standard.array(forKey: Self.misuraSalvata) as? [Double]
+    guard let m, m.count == 2 else { return NSSize(width: 480, height: 726) }
+    return limita(NSSize(width: m[0], height: m[1]))
+  }
+
+  /// Fra il minimo leggibile e lo schermo: un pannello più alto dello schermo
+  /// non si vedrebbe tutto, e uno da trecento pixel non è un quaderno.
+  private func limita(_ s: NSSize) -> NSSize {
+    let schermo = NSScreen.main?.visibleFrame.size ?? NSSize(width: 1440, height: 900)
+    return NSSize(
+      width: min(max(360, s.width), schermo.width - 40),
+      height: min(max(420, s.height), schermo.height - 40))
+  }
+
+  /// L'angolo in basso a destra si tira, e il pannello cresce restando
+  /// appeso alla sua icona. NSPopover non si ridimensiona da solo, ma
+  /// `contentSize` si può cambiare mentre è aperto: si riposiziona e resta
+  /// ancorato. Sedici pixel nell'angolo, dove sotto c'è scrivania e non carta.
+  private func maniglia() -> NSView {
+    // Sei pixel dentro: il pannello ha gli angoli stondati e ci ritaglia
+    // sopra — appiccicata al vertice se ne vedeva un trattino solo.
+    let lato: CGFloat = 18
+    let bordo: CGFloat = 6
+    let m = Maniglia(
+      frame: NSRect(x: nido.bounds.width - lato - bordo, y: bordo, width: lato, height: lato))
+    m.autoresizingMask = [.minXMargin, .maxYMargin]
+    m.tirata = { [weak self] delta in self?.ridimensiona(delta) }
+    return m
+  }
+
+  private func ridimensiona(_ delta: CGSize) {
+    let ora = pannello.contentSize
+    let nuova = limita(NSSize(width: ora.width + delta.width, height: ora.height + delta.height))
+    guard nuova != ora else { return }
+    pannello.contentSize = nuova
+    UserDefaults.standard.set([nuova.width, nuova.height], forKey: Self.misuraSalvata)
   }
 
   /// Quel che resta al quaderno sotto la striscia.
@@ -189,6 +233,36 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
   @objc private func apriBrowser() { NSWorkspace.shared.open(indirizzo) }
   @objc private func ricarica() { web.reload() }
+}
+
+/// Sedici pixel nell'angolo che si tirano. Tre trattini in diagonale, come
+/// ovunque: un angolo che non si annuncia non lo tira nessuno.
+final class Maniglia: NSView {
+  var tirata: ((CGSize) -> Void)?
+  private var ultimo = NSPoint.zero
+
+  override func resetCursorRects() { addCursorRect(bounds, cursor: .crosshair) }
+  override func mouseDown(with _: NSEvent) { ultimo = NSEvent.mouseLocation }
+
+  override func mouseDragged(with _: NSEvent) {
+    let ora = NSEvent.mouseLocation
+    // In basso a destra: a destra cresce la larghezza, in giù l'altezza —
+    // e sullo schermo la y cresce verso l'alto, da qui il segno rovesciato.
+    tirata?(CGSize(width: ora.x - ultimo.x, height: ultimo.y - ora.y))
+    ultimo = ora
+  }
+
+  override func draw(_: NSRect) {
+    NSColor.secondaryLabelColor.withAlphaComponent(0.6).setStroke()
+    let p = NSBezierPath()
+    p.lineWidth = 1.5
+    p.lineCapStyle = .round
+    for d in [CGFloat(6), 11, 16] {
+      p.move(to: NSPoint(x: bounds.maxX - d, y: bounds.minY + 1))
+      p.line(to: NSPoint(x: bounds.maxX - 1, y: bounds.minY + d))
+    }
+    p.stroke()
+  }
 }
 
 let app = NSApplication.shared
