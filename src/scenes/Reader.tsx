@@ -53,11 +53,10 @@ export default function Reader({ id }: { id: string }) {
   const [leaf, setLeaf] = useState<Leaf | null>(null)
   const [caretTarget, setCaretTarget] = useState<CaretTarget | null>(null)
 
-  // il margine lascia posto all'astuccio laterale e alle frecce; sul telefono
-  // le frecce non ci sono (angoli e swipe) e la pagina si prende tutto
-  // ai lati il margine fa posto alle frecce; sopra e sotto solo un filo d'aria:
-  // il quaderno aperto si prende tutto lo spazio che c'è
-  const { ref: fitRef, scale, size: fitSize } = useFitScale(contentW, PAGE_H, wide ? 56 : 6, 6)
+  // Ai lati il margine fa posto alle frecce. Sopra e sotto vale metà delle
+  // barre che galleggiano: quel che resta scoperto cade sul margine bianco
+  // della carta, non sulla prima e sull'ultima riga scritta.
+  const { ref: fitRef, scale, size: fitSize } = useFitScale(contentW, PAGE_H, wide ? 56 : 6, 32)
   const { state: saveState, ping } = useAutosaveIndicator()
   const reflow = useTextPagination(notebook, TEXT_W, TEXT_H)
   const play = useSound()
@@ -325,42 +324,47 @@ export default function Reader({ id }: { id: string }) {
     : `Pagina ${index + 1} di ${shown}`
 
   return (
-    <main className="flex h-dvh flex-col overflow-hidden bg-desk">
+    <main className="relative h-dvh overflow-hidden bg-desk">
       <h1 className="sr-only">{notebook.title || 'Quaderno'}</h1>
-      <NotebookHeader
-        title={notebook.title}
-        onTitleChange={(t) => renameNotebook(notebook.id, t)}
-        pageLabel={pageLabel}
-        mode={mode}
-        onModeChange={setMode}
-        onBack={() => {
-          if (reduced || !shelfRect) navigate('/')
-          else setClosing(true)
-        }}
-        saveState={saveState}
-        zoom={{
-          canIn: !zoom || (zoom.level === 'page' && isSpread),
-          canOut: zoom !== null,
-          onIn: zoomIn,
-          onOut: zoomOut,
-          label: zoomLabel,
-        }}
-        clearLabel={isSpread ? 'Svuota le due pagine aperte' : 'Svuota questa pagina'}
-        onClearPages={() => {
-          for (const i of visible) if (pages[i]) clearPage(notebook.id, i)
-          drawApis.current.forEach((api) => api.clear())
-          ping()
-        }}
-        onDelete={() => {
-          removeNotebook(notebook.id)
-          navigate('/')
-        }}
-      />
+      {/* Intestazione e vassoio non stanno più in colonna sopra e sotto la
+          carta: galleggiano. Erano 128px che alla pagina non tornavano più —
+          adesso la carta prende tutta l'altezza e loro poggiano sui margini,
+          con un velo sotto perché sopra la carta si leggano lo stesso. */}
+      <div className="absolute inset-x-0 top-0 z-20 bg-desk/75 backdrop-blur-sm">
+        <NotebookHeader
+          title={notebook.title}
+          onTitleChange={(t) => renameNotebook(notebook.id, t)}
+          pageLabel={pageLabel}
+          mode={mode}
+          onModeChange={setMode}
+          onBack={() => {
+            if (reduced || !shelfRect) navigate('/')
+            else setClosing(true)
+          }}
+          saveState={saveState}
+          zoom={{
+            canIn: !zoom || (zoom.level === 'page' && isSpread),
+            canOut: zoom !== null,
+            onIn: zoomIn,
+            onOut: zoomOut,
+            label: zoomLabel,
+          }}
+          clearLabel={isSpread ? 'Svuota le due pagine aperte' : 'Svuota questa pagina'}
+          onClearPages={() => {
+            for (const i of visible) if (pages[i]) clearPage(notebook.id, i)
+            drawApis.current.forEach((api) => api.clear())
+            ping()
+          }}
+          onDelete={() => {
+            removeNotebook(notebook.id)
+            navigate('/')
+          }}
+        />
+      </div>
 
-      {/* Una riga: [astuccio] [freccia] [pagina] [freccia]. La pagina misura lo
-          spazio che resta fra i vicini, così niente le si sovrappone mai. */}
+      {/* Una riga: [freccia] [pagina] [freccia], su tutta la scrivania. */}
       <div
-        className="relative flex min-h-0 min-w-0 flex-1 items-center gap-xs overflow-hidden px-xs md:gap-sm md:px-sm"
+        className="absolute inset-0 flex items-center gap-xs overflow-hidden px-xs md:gap-sm md:px-sm"
         onTouchStart={(e) => (swipe.current = e.touches[0]?.clientX ?? 0)}
         onTouchEnd={(e) => {
           // un tratto orizzontale di matita non è uno swipe
@@ -494,7 +498,7 @@ export default function Reader({ id }: { id: string }) {
 
       {/* Lo stesso vassoio in basso per testo e disegno: la pagina non si
           sposta quando prendi la matita. Altezza fissa, contenuto che cambia. */}
-      <div className="flex h-[3.75rem] shrink-0 items-start justify-center pb-2xs">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex h-[3.75rem] items-start justify-center pb-2xs [&>*]:pointer-events-auto">
         {drawing ? (
           <PencilCase
             onUndo={() => activeApi()?.undo()}

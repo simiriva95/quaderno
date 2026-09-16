@@ -10,9 +10,9 @@
     },
     {
       "name": "quaderno (preview)",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "preview"],
-      "port": 4173
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "preview", "--port", "4180"],
+      "port": 4180
     }
   ]
 }
