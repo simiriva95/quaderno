@@ -10,7 +10,7 @@ import { PencilCase } from '../components/draw/PencilCase'
 import { InkToolbar } from '../components/text/InkToolbar'
 import { TextPage, type CaretTarget } from '../components/text/TextPage'
 import { useAutosaveIndicator } from '../hooks/useAutosaveIndicator'
-import { useFitScale } from '../hooks/useFitScale'
+import { useFitScale, useHeight } from '../hooks/useFitScale'
 import { useHandSize } from '../hooks/useHandSize'
 import { useIsSpread, useMediaQuery } from '../hooks/useMediaQuery'
 import { useReducedMotion } from '../hooks/useReducedMotion'
@@ -18,7 +18,7 @@ import { useSound } from '../hooks/useSound'
 import { useTextPagination } from '../hooks/useTextPagination'
 import { useZoomPan } from '../hooks/useZoomPan'
 import type { useDrawingCanvas } from '../hooks/useDrawingCanvas'
-import { GUTTER, PAGE_H, PAGE_W, TEXT_H, TEXT_W } from '../lib/constants'
+import { GUTTER, PAGE_H, PAGE_PAD_BOTTOM, PAGE_W, TEXT_H, TEXT_W } from '../lib/constants'
 import { usePrefs } from '../store/prefs'
 import { useNotebooks } from '../store/notebooks'
 import { useUi } from '../store/ui'
@@ -56,10 +56,21 @@ export default function Reader({ id }: { id: string }) {
   const [leaf, setLeaf] = useState<Leaf | null>(null)
   const [caretTarget, setCaretTarget] = useState<CaretTarget | null>(null)
 
-  // Ai lati il margine fa posto alle frecce. Sopra e sotto vale metà delle
-  // barre che galleggiano: quel che resta scoperto cade sul margine bianco
-  // della carta, non sulla prima e sull'ultima riga scritta.
-  const { ref: fitRef, scale, size: fitSize } = useFitScale(contentW, PAGE_H, wide ? 56 : 6, 32)
+  // Ai lati il margine fa posto alle frecce. Sopra e sotto lo decide l'altezza
+  // vera delle barre: in una finestra stretta l'intestazione va a capo e
+  // diventa il doppio, e un numero deciso a tavolino le avrebbe lasciate
+  // sopra le prime righe.
+  const intestazioneRef = useRef<HTMLDivElement>(null)
+  const vassoioRef = useRef<HTMLDivElement>(null)
+  const barre = Math.max(useHeight(intestazioneRef), useHeight(vassoioRef))
+  const {
+    ref: fitRef,
+    scale,
+    size: fitSize,
+  } = useFitScale(contentW, PAGE_H, wide ? 56 : 6, {
+    chrome: barre,
+    pad: PAGE_PAD_BOTTOM,
+  })
   const { state: saveState, ping } = useAutosaveIndicator()
   const reflow = useTextPagination(notebook, TEXT_W, TEXT_H)
   const play = useSound()
@@ -333,7 +344,10 @@ export default function Reader({ id }: { id: string }) {
           carta: galleggiano. Erano 128px che alla pagina non tornavano più —
           adesso la carta prende tutta l'altezza e loro poggiano sui margini,
           con un velo sotto perché sopra la carta si leggano lo stesso. */}
-      <div className="absolute inset-x-0 top-0 z-20 bg-desk/75 backdrop-blur-sm">
+      <div
+        ref={intestazioneRef}
+        className="absolute inset-x-0 top-0 z-20 bg-desk/75 backdrop-blur-sm"
+      >
         <NotebookHeader
           title={notebook.title}
           onTitleChange={(t) => renameNotebook(notebook.id, t)}
@@ -501,7 +515,10 @@ export default function Reader({ id }: { id: string }) {
 
       {/* Lo stesso vassoio in basso per testo e disegno: la pagina non si
           sposta quando prendi la matita. Altezza fissa, contenuto che cambia. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex h-[3.75rem] items-start justify-center pb-2xs [&>*]:pointer-events-auto">
+      <div
+        ref={vassoioRef}
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex h-[3.75rem] items-start justify-center pb-2xs [&>*]:pointer-events-auto"
+      >
         {drawing ? (
           <PencilCase
             onUndo={() => activeApi()?.undo()}
