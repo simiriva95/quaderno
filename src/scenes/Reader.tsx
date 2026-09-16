@@ -57,7 +57,7 @@ export default function Reader({ id }: { id: string }) {
   // le frecce non ci sono (angoli e swipe) e la pagina si prende tutto
   // ai lati il margine fa posto alle frecce; sopra e sotto solo un filo d'aria:
   // il quaderno aperto si prende tutto lo spazio che c'è
-  const { ref: fitRef, scale, size: fitSize } = useFitScale(contentW, PAGE_H, wide ? 72 : 8, 10)
+  const { ref: fitRef, scale, size: fitSize } = useFitScale(contentW, PAGE_H, wide ? 56 : 6, 6)
   const { state: saveState, ping } = useAutosaveIndicator()
   const reflow = useTextPagination(notebook, TEXT_W, TEXT_H)
   const play = useSound()
@@ -494,7 +494,7 @@ export default function Reader({ id }: { id: string }) {
 
       {/* Lo stesso vassoio in basso per testo e disegno: la pagina non si
           sposta quando prendi la matita. Altezza fissa, contenuto che cambia. */}
-      <div className="flex h-[5.25rem] shrink-0 items-start justify-center pb-xs">
+      <div className="flex h-[3.75rem] shrink-0 items-start justify-center pb-2xs">
         {drawing ? (
           <PencilCase
             onUndo={() => activeApi()?.undo()}

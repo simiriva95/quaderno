@@ -162,7 +162,7 @@ export function Editor({ stored, onSave, onPing }: Props) {
       {/* Un foglio vero, non testo sulla scrivania: il resto dell'app è fatto
           di oggetti che poggiano da qualche parte, e questo non può essere
           l'unico che galleggia. */}
-      <div className="web-doc mx-auto my-sm w-full max-w-[72ch] bg-paper px-md py-lg shadow-lift sm:rounded-lg sm:px-lg">
+      <div className="web-doc min-h-full w-full bg-paper px-md py-lg shadow-lift sm:px-lg">
         <EditorContent editor={editor} />
       </div>
       <Toolbar editor={editor} onInsertImage={(files) => insert(editor, files, urls)} />

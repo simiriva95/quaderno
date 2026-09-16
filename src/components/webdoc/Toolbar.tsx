@@ -137,7 +137,7 @@ export function Toolbar({ editor, onInsertImage }: Props) {
         : null,
   })
 
-  if (!editor || !state) return <div className="h-[5.25rem] shrink-0" />
+  if (!editor || !state) return <div className="h-[3.75rem] shrink-0" />
 
   // Le maniglie di ridimensionamento sono solo per il mouse: da tastiera la
   // larghezza si cambia da qui.
@@ -147,7 +147,7 @@ export function Toolbar({ editor, onInsertImage }: Props) {
   }
 
   return (
-    <div className="flex h-[5.25rem] shrink-0 items-start justify-center px-md pb-xs">
+    <div className="sticky bottom-0 flex h-[3.75rem] shrink-0 items-start justify-center px-md pb-2xs">
       <div
         role="toolbar"
         aria-label="Strumenti del documento"

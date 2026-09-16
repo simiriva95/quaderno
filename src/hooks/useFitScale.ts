@@ -13,7 +13,8 @@ export function useFitScale(contentW: number, contentH: number, marginX = 32, ma
     const measure = () => {
       const { width, height } = el.getBoundingClientRect()
       const avail = { w: width - marginX * 2, h: height - marginY * 2 }
-      setScale(Math.min(avail.w / contentW, avail.h / contentH, 1.25))
+      // nessun tetto: il quaderno aperto si prende tutto lo spazio che trova
+      setScale(Math.min(avail.w / contentW, avail.h / contentH))
       setSize({ w: width, h: height })
     }
     measure()
