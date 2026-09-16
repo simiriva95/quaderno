@@ -153,7 +153,7 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
     striscia.layer?.backgroundColor = NSColor(name: nil) { aspetto in
       aspetto.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         ? NSColor(red: 0.109, green: 0.098, blue: 0.087, alpha: 1) // #1C1916, --c-desk sera
-        : NSColor(red: 0.824, green: 0.725, blue: 0.608, alpha: 1) // #D2B99B, --c-desk giorno
+        : NSColor(red: 0.812, green: 0.729, blue: 0.631, alpha: 1) // #CFBAA1, --c-desk giorno
     }.cgColor
 
     return striscia

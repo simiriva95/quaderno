@@ -17,13 +17,13 @@
   --c-paper: oklch(97.4% 0.014 84);
   --c-paper-warm: oklch(98% 0.024 88.2);
   --c-paper-edge: oklch(91% 0.02 80);
-  --c-desk: oklch(80% 0.05 72); /* stessa luce, più calore: accanto al muro era grigia */
+  --c-desk: oklch(80% 0.042 72); /* stessa luce, un filo di calore in più del grigio */
   --c-desk-deep: oklch(70% 0.042 70);
   /* L'intonaco ha tre fermate sue. La cima prendeva --c-paper-warm, che sta
      al 98%: il muro andava a bianco proprio dove c'è più superficie, e col
      toon shading intorno sembrava carta, non una stanza. */
-  --c-wall-top: oklch(85% 0.055 76);
-  --c-wall: oklch(77% 0.072 62);
+  --c-wall-top: oklch(88% 0.032 80);
+  --c-wall: oklch(83% 0.042 70);
   --c-wood: oklch(72% 0.075 66);
   --c-wood-deep: oklch(58% 0.08 60);
 
