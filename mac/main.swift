@@ -17,7 +17,8 @@ import WebKit
 final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
   private var voce: NSStatusItem!
   private let pannello = NSPopover()
-  private let nido = NSView(frame: NSRect(x: 0, y: 0, width: 480, height: 700))
+  private let nido = NSView(frame: NSRect(x: 0, y: 0, width: 480, height: 726))
+  private static let barraH: CGFloat = 26
   private var web: WKWebView!
   private var finestra: NSWindow?
   private var indirizzo: URL!
@@ -32,11 +33,12 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
     conf.limitsNavigationsToAppBoundDomains = true
     conf.websiteDataStore = .default() // su disco: gli appunti sopravvivono all'uscita
 
-    web = WKWebView(frame: nido.bounds, configuration: conf)
+    web = WKWebView(frame: areaWeb, configuration: conf)
     web.autoresizingMask = [.width, .height]
     web.allowsBackForwardNavigationGestures = true
     web.load(URLRequest(url: indirizzo))
     nido.addSubview(web)
+    nido.addSubview(strisciaConEspandi())
 
     let contenitore = NSViewController()
     contenitore.view = nido
@@ -51,6 +53,40 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
     voce.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
 
     NSApp.mainMenu = menuPrincipale()
+  }
+
+  /// Quel che resta al quaderno sotto la striscia.
+  private var areaWeb: NSRect {
+    NSRect(x: 0, y: 0, width: nido.bounds.width, height: nido.bounds.height - Self.barraH)
+  }
+
+  /// Una striscia sottile in cima al pannello, del colore della scrivania, con
+  /// il tasto per aprire la finestra. Il menu col tasto destro c'era già, ma
+  /// un tasto che non si vede è un tasto che non esiste — e in ogni angolo
+  /// dove metterlo galleggiante ci sta già qualcosa dell'app.
+  private func strisciaConEspandi() -> NSView {
+    let h = Self.barraH
+    let striscia = NSView(frame: NSRect(x: 0, y: nido.bounds.height - h, width: nido.bounds.width, height: h))
+    striscia.autoresizingMask = [.width, .minYMargin]
+    striscia.wantsLayer = true
+    striscia.layer?.backgroundColor = NSColor(name: nil) { aspetto in
+      aspetto.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        ? NSColor(red: 0.110, green: 0.098, blue: 0.086, alpha: 1) // #1C1916
+        : NSColor(red: 0.937, green: 0.902, blue: 0.855, alpha: 1) // #EFE6DA
+    }.cgColor
+
+    let tasto = NSButton(frame: NSRect(x: striscia.bounds.width - h, y: 1, width: h - 2, height: h - 2))
+    tasto.autoresizingMask = [.minXMargin]
+    tasto.bezelStyle = .accessoryBarAction
+    tasto.isBordered = false
+    tasto.image = NSImage(
+      systemSymbolName: "arrow.up.left.and.arrow.down.right", accessibilityDescription: "Apri in finestra")
+    tasto.imageScaling = .scaleProportionallyDown
+    tasto.toolTip = "Apri in finestra"
+    tasto.target = self
+    tasto.action = #selector(apriFinestra)
+    striscia.addSubview(tasto)
+    return striscia
   }
 
   // ── La voce nella barra ───────────────────────────────────────────────
@@ -112,8 +148,8 @@ final class Barra: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
   func windowWillClose(_: Notification) {
     // La web view torna nel pannello, o al prossimo clic non ci sarebbe niente.
-    web.frame = nido.bounds
-    nido.addSubview(web)
+    web.frame = areaWeb
+    nido.addSubview(web, positioned: .below, relativeTo: nido.subviews.first)
     finestra = nil
     NSApp.setActivationPolicy(.accessory)
   }

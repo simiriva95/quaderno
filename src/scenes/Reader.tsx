@@ -43,6 +43,9 @@ export default function Reader({ id }: { id: string }) {
 
   const isSpread = useIsSpread()
   const wide = useMediaQuery('(min-width: 640px)')
+  // Col mouse non c'è lo swipe: in una finestra stretta resterebbero solo gli
+  // angoli della pagina, e da soli non bastano a far girare un quaderno.
+  const puntatore = useMediaQuery('(hover: hover)')
   const reduced = useReducedMotion()
   const step = isSpread ? 2 : 1
   const contentW = isSpread ? PAGE_W * 2 + GUTTER : PAGE_W
@@ -381,7 +384,7 @@ export default function Reader({ id }: { id: string }) {
           <NavArrow
             side="left"
             offset={zoom ? fitSize.w / 2 - 60 : (contentW * scale) / 2}
-            always={zoom !== null}
+            always={zoom !== null || puntatore}
             disabled={!canGoBack && (!zoom || atFirstRegion)}
             onClick={() => go(-1)}
           />
@@ -480,7 +483,7 @@ export default function Reader({ id }: { id: string }) {
           <NavArrow
             side="right"
             offset={zoom ? fitSize.w / 2 - 60 : (contentW * scale) / 2}
-            always={zoom !== null}
+            always={zoom !== null || puntatore}
             disabled={!canGoNext && (!zoom || atLastRegion)}
             onClick={() => go(1)}
           />
@@ -545,7 +548,7 @@ function NavArrow({
       onClick={onClick}
       disabled={disabled}
       aria-label={side === 'left' ? 'Pagina precedente' : 'Pagina successiva'}
-      style={{ [side]: `calc(50% - ${offset + 62}px)` }}
+      style={{ [side]: `max(6px, calc(50% - ${offset + 62}px))` }}
       className={`absolute top-1/2 z-30 size-12 -translate-y-1/2 place-items-center rounded-full bg-paper text-ink shadow-paper transition-[opacity,transform] hover:scale-105 disabled:pointer-events-none disabled:opacity-20 ${
         always ? 'grid' : 'hidden sm:grid'
       }`}
