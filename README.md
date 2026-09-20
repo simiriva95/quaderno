@@ -4,12 +4,15 @@
   Un quaderno di carta che vive nel browser. Una mensola in 3D, quaderni con la copertina
   che scegli tu, pagine a righe su cui il testo cade davvero sulle righe, e una matita.
   <br />
-  Zero backend, zero login: tutto resta sul tuo dispositivo. Si installa sul telefono
-  e sta nella barra dei menu del Mac, e funziona anche senza rete.
+  Zero backend, zero login: tutto resta sul tuo dispositivo. Si installa sul telefono,
+  sta nella barra dei menu del Mac e nell'area di notifica di Windows, e funziona
+  anche senza rete.
 </p>
 
 <p align="center">
   <a href="https://quaderno-two.vercel.app"><strong>Provalo →</strong></a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/simiriva95/quaderno/releases/latest">Scaricalo per Windows</a>
   &nbsp;·&nbsp;
   <a href="#come-funziona">Come funziona</a>
   &nbsp;·&nbsp;
@@ -24,8 +27,8 @@
 
 <p align="center"><sub>
 <em>English:</em> a client-side notebook for students. A cel-shaded 3D shelf, notebooks you design yourself,
-ruled pages where handwriting-style text sits exactly on the lines, and a pencil. Installable as a PWA and as
-a macOS menu-bar app; works offline. No backend, no account: everything lives in <code>localStorage</code>.
+ruled pages where handwriting-style text sits exactly on the lines, and a pencil. Installable as a PWA, as
+a macOS menu-bar app and as a Windows tray app; works offline. No backend, no account: everything lives in <code>localStorage</code>.
 Italian UI. MIT.
 </sub></p>
 
@@ -189,6 +192,16 @@ tutti i lati. Il tasto destro apre il menu; da lì si passa a una finestra vera,
 andare a schermo intero. L'archivio della `WKWebView` è separato da quello di Safari:
 sul Mac il quaderno è uno, quello della barra.
 
+**Su Windows.** [L'installer](https://github.com/simiriva95/quaderno/releases/latest) e
+il quaderno sta vicino all'orologio, nell'area di notifica. Fa lo stesso mestiere
+dell'app del Mac e con lo stesso disegno — pannello appeso all'icona, tasto destro per
+il menu, «apri in finestra» quando serve spazio — sopra WebView2, che in Windows 11 e in
+ogni Windows 10 con Edge c'è già. Un file di C#, nessun Electron. Il pannello non ha
+cornice, perché Windows non sa fare una finestra titolata e vuota: i bordi che si tirano
+sono rimessi a mano, e i sei pixel che restano attorno prendono il colore della
+scrivania di dentro, come la striscia sul Mac. L'installer non chiede la password
+d'amministratore: sta in `%LOCALAPPDATA%`, con gli appunti accanto.
+
 </td>
 <td width="54%">
 
@@ -215,19 +228,20 @@ npm run dev
 
 Node 20+. Nessuna variabile d'ambiente, nessun servizio esterno.
 
-| Script                        | Cosa fa                                                              |
-| ----------------------------- | -------------------------------------------------------------------- |
-| `npm run dev`                 | dev server con HMR                                                   |
-| `npm run build`               | type-check (`tsc -b`) e build di produzione in `dist/`               |
-| `npm run preview`             | serve `dist/` su `:4173`                                             |
-| `npm run lint`                | oxlint + prettier `--check`                                          |
-| `npm run format`              | prettier `--write`                                                   |
-| `npm run test:e2e`            | Playwright, 30 test, desktop e telefono (vedi sotto)                 |
-| `npm run debug:portale [url]` | l'agente che _usa_ l'app e cerca bug (vedi sotto)                    |
-| `npm run audit [url]`         | l'agente che percorre tutti i casi d'uso e scrive `.audit/report.md` |
-| `node scripts/screens.mjs`    | rigenera gli screenshot di questo README in `docs/screenshots/`      |
-| `node scripts/icons.mjs`      | rigenera le icone dell'app installata da un disegno solo             |
-| `./mac/build.sh [--installa]` | costruisce l'app per la barra dei menu del Mac (serve Xcode)         |
+| Script                        | Cosa fa                                                               |
+| ----------------------------- | --------------------------------------------------------------------- |
+| `npm run dev`                 | dev server con HMR                                                    |
+| `npm run build`               | type-check (`tsc -b`) e build di produzione in `dist/`                |
+| `npm run preview`             | serve `dist/` su `:4173`                                              |
+| `npm run lint`                | oxlint + prettier `--check`                                           |
+| `npm run format`              | prettier `--write`                                                    |
+| `npm run test:e2e`            | Playwright, 30 test, desktop e telefono (vedi sotto)                  |
+| `npm run debug:portale [url]` | l'agente che _usa_ l'app e cerca bug (vedi sotto)                     |
+| `npm run audit [url]`         | l'agente che percorre tutti i casi d'uso e scrive `.audit/report.md`  |
+| `node scripts/screens.mjs`    | rigenera gli screenshot di questo README in `docs/screenshots/`       |
+| `node scripts/icons.mjs`      | rigenera le icone dell'app installata da un disegno solo              |
+| `./mac/build.sh [--installa]` | costruisce l'app per la barra dei menu del Mac (serve Xcode)          |
+| `win\build.ps1 [-Installa]`   | costruisce l'app e l'installer di Windows (serve .NET 8 + Inno Setup) |
 
 I test e gli agenti usano il browser di Playwright, da installare una volta:
 

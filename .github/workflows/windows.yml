@@ -1,0 +1,68 @@
+# L'installer per Windows si costruisce solo su Windows: serve il compilatore
+# per net8.0-windows e serve Inno Setup, e nessuno dei due gira altrove. Qui
+# c'è una macchina Windows che li ha già.
+#
+# Su ogni PR che tocca win/ costruisce e basta: è il modo di sapere che il
+# C# compila senza avere un PC Windows sottomano. Su un tag `v*` costruisce e
+# allega l'installer alla release, che è l'indirizzo da cui si scarica.
+name: Windows
+
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+    paths:
+      - 'win/**'
+      - '.github/workflows/windows.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # Sull'immagine di GitHub c'è già; se un giorno non ci fosse, meglio
+      # trenta secondi di installazione che una build rossa.
+      - name: Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+          }
+
+      - name: Il numero di versione
+        id: versione
+        shell: pwsh
+        run: |
+          $v = "0.0.$env:GITHUB_RUN_NUMBER"
+          if ($env:GITHUB_REF_TYPE -eq 'tag') { $v = $env:GITHUB_REF_NAME -replace '^v', '' }
+          "numero=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Costruisci
+        shell: pwsh
+        run: .\win\build.ps1 -Versione ${{ steps.versione.outputs.numero }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Quaderno-${{ steps.versione.outputs.numero }}-setup
+          path: win/build/Quaderno-*-setup.exe
+          if-no-files-found: error
+
+      - name: Allegalo alla release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $file = (Resolve-Path win\build\Quaderno-*-setup.exe).Path
+          gh release create $env:GITHUB_REF_NAME $file --generate-notes `
+            --title "Il Quaderno $($env:GITHUB_REF_NAME)"
+          if ($LASTEXITCODE -ne 0) { gh release upload $env:GITHUB_REF_NAME $file --clobber }

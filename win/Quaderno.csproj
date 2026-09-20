@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Un file di codice e questo. Come sul Mac: niente soluzione, niente
+    designer, niente cartelle generate da una procedura guidata.
+
+    Autonoma (`SelfContained`) perché il .NET non è nel sistema e chiedere a
+    chi installa di installare anche un runtime è un passaggio in più che
+    l'installer può togliere di mezzo. WebView2, invece, in Windows 11 e in
+    ogni Windows 10 con Edge c'è già: quello si usa, non si porta.
+  -->
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Quaderno</AssemblyName>
+    <RootNamespace>Quaderno</RootNamespace>
+    <Product>Il Quaderno degli Appunti</Product>
+    <Company>Simone Riva</Company>
+    <ApplicationIcon>quaderno.ico</ApplicationIcon>
+    <Version>1.0.0</Version>
+
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+
+    <!-- Il pacchetto WebView2 porta dentro anche la versione per WPF, che
+         qui non si usa e che pretende un'altra WindowsBase. Il conflitto è
+         fra due DLL che non si incontreranno mai: resta un avviso, e un
+         avviso che c'è sempre è un avviso che non si legge più. -->
+    <MSBuildWarningsAsMessages>MSB3277</MSBuildWarningsAsMessages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- L'SDK di WebView2 cambia numero ogni mese e non cambia forma: qui
+         interessa l'ultimo della serie 1.0, non un numero da aggiornare a
+         mano a ogni release. -->
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Serve anche a fianco dell'eseguibile: l'icona nell'area di notifica
+         la vuole a 16 pixel, e l'icona dentro l'exe è quella grande. -->
+    <None Update="quaderno.ico" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
