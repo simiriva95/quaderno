@@ -9,3 +9,6 @@ playwright-report
 .scratch
 .audit
 mac/build
+win/build
+win/bin
+win/obj
